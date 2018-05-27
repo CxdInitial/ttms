@@ -30,47 +30,66 @@ public class ActionLevelControl {
         this.defaultValue = defaultValue;
     }
 
-    private long getLoginUserNo(OnlineList list, Object user) {
+    private Long getLoginUserNo(OnlineList list, Object user) {
         if (user instanceof Long && list.isOnline((Long) user))
-                return (long) user;
-        return -1;
+            return (long) user;
+        return null;
     }
 
-    @Around("@within(org.springframework.stereotype.Controller)&&@annotation(self)")
-    Object self(ProceedingJoinPoint pjp, Self self) throws Throwable {
+    private Long getActionUserNo(ProceedingJoinPoint pjp) {
         Parameter[] parameters = ((MethodSignature) pjp.getSignature()).getMethod().getParameters();
-        Parameter action = Arrays.stream(parameters).filter(parameter -> parameter.getType().equals(long.class) && parameter.getAnnotation(PathVariable.class) != null && parameter.getAnnotation(PathVariable.class).value().equalsIgnoreCase("number")).findFirst().orElse(null);
-        long current = -1;
+        Parameter action = Arrays.stream(parameters).filter(parameter -> parameter.getType().equals(long.class) && parameter.getAnnotation(PathVariable.class) != null).findFirst().orElse(null);
+        Long current = null;
         for (int i = 0; i < parameters.length; i++) {
             if (parameters[i] == action && pjp.getArgs()[i] instanceof Long) {
                 current = (Long) pjp.getArgs()[i];
                 break;
             }
         }
+        return current;
+    }
+
+    @Around("@within(org.springframework.stereotype.Controller)&&@annotation(notSelf)")
+    Object self(ProceedingJoinPoint pjp, NotSelf notSelf) throws Throwable {
+        Long action = getActionUserNo(pjp);
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
-        if (current != -1 && session.getServletContext().getAttribute("onlineList") instanceof OnlineList && getLoginUserNo((OnlineList) session.getServletContext().getAttribute("onlineList"), session.getAttribute("user")) == current)
-            return pjp.proceed(pjp.getArgs());
-        else {
-            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse().setStatus(HttpStatus.UNAUTHORIZED.value());
-            return defaultValue.get(((MethodSignature) pjp.getSignature()).getReturnType());
+        if (action != null && session.getServletContext().getAttribute("onlineList") instanceof OnlineList) {
+            Long no = getLoginUserNo((OnlineList) session.getServletContext().getAttribute("onlineList"), session.getAttribute("user"));
+            if (no != null && !no.equals(action))
+                return pjp.proceed(pjp.getArgs());
         }
+        ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse().setStatus(HttpStatus.UNAUTHORIZED.value());
+        return defaultValue.get(((MethodSignature) pjp.getSignature()).getReturnType());
+    }
+
+    @Around("@within(org.springframework.stereotype.Controller)&&@annotation(self)")
+    Object self(ProceedingJoinPoint pjp, Self self) throws Throwable {
+        Long action = getActionUserNo(pjp);
+        HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
+        if (action != null && session.getServletContext().getAttribute("onlineList") instanceof OnlineList) {
+            Long loginNo = getLoginUserNo((OnlineList) session.getServletContext().getAttribute("onlineList"), session.getAttribute("user"));
+            if (loginNo != null && loginNo.equals(action))
+                return pjp.proceed(pjp.getArgs());
+        }
+        ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse().setStatus(HttpStatus.UNAUTHORIZED.value());
+        return defaultValue.get(((MethodSignature) pjp.getSignature()).getReturnType());
     }
 
     @Around("@within(org.springframework.stereotype.Controller)&&(@within(level)||@annotation(level))")
     Object level(ProceedingJoinPoint pjp, RequiredLevel level) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) pjp.getSignature();
         if (level == null)
-            level = methodSignature.getMethod().getAnnotation(RequiredLevel.class);
+            level = pjp.getTarget().getClass().getAnnotation(RequiredLevel.class);
 
         boolean exec = false;
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
         Object list = session.getServletContext().getAttribute("onlineList");
-        long loginNo = -1;
+        Long loginNo = null;
         if (list instanceof OnlineList)
             loginNo = getLoginUserNo((OnlineList) list, session.getAttribute("user"));
         if (level.allow() == RequiredLevel.Level.NOBODY)
             exec = true;
-        else if (loginNo != -1) {
+        else if (loginNo != null) {
             Teacher teacher = userService.find(loginNo);
             if (teacher != null)
                 if (teacher.getAdmin())

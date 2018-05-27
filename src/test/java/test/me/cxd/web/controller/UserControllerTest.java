@@ -29,8 +29,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- *  Test different http status code returned by {@link me.cxd.web.controller.User} controller .
- *  Notion: Before test, change the validation annotation on {@link me.cxd.bean.Teacher#number} (remove @Max(2000000000)) in {@link me.cxd.bean.Teacher} to make sure that test data does't go wrong.
+ * Test different http status code returned by {@link me.cxd.web.controller.User} controller .
+ * Notion: Before test, change the validation annotation on {@link me.cxd.bean.Teacher#number} (remove @Max(2000000000)) in {@link me.cxd.bean.Teacher} to make sure that test data does't go wrong.
  */
 @ActiveProfiles("testUserController")
 @SpringBootTest
@@ -42,6 +42,48 @@ class UserControllerTest {
     @Autowired
     UserControllerTest(WebApplicationContext wac) {
         this.wac = wac;
+    }
+
+    @Nested
+    class RemoveTest {
+        private MockMvc mockMvc;
+
+        @BeforeEach
+        void setup() {
+            this.mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
+        }
+
+        @ParameterizedTest
+        @ValueSource(longs = {2015224306L})
+        void remove_noContent(long removeUserNo) throws Exception {
+            MockHttpSession session = new MockHttpSession();
+            session.setAttribute("user", 2015214287L); //remind: session attribute "user" must be of long type.
+            OnlineList list = new OnlineList();
+            list.online(2015214287L);
+            session.getServletContext().setAttribute("onlineList", list);
+            mockMvc.perform(delete("/user/{number}", removeUserNo)
+                    .session(session)
+            ).andExpect(status().is(HttpStatus.NO_CONTENT.value()));
+        }
+
+        @ParameterizedTest
+        @ValueSource(longs = {2015224306L})
+        void remove_unauthorized(long removeUserNo) throws Exception {
+            mockMvc.perform(delete("/user/{number}", removeUserNo)
+            ).andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
+        }
+
+        @ParameterizedTest
+        @ValueSource(longs = {2015224306L})
+        void removeSelf_unauthorized(long removeUserNo)throws Exception {
+            MockHttpSession session = new MockHttpSession();
+            session.setAttribute("user", removeUserNo); //remind: session attribute "user" must be of long type.
+            OnlineList list = new OnlineList();
+            list.online(removeUserNo);
+            mockMvc.perform(delete("/user/{number}", removeUserNo)
+                    .session(session)
+            ).andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
+        }
     }
 
     @Nested
@@ -155,7 +197,9 @@ class UserControllerTest {
 
         @Override
         public Teacher find(long number) {
-            return new Teacher();
+            Teacher user = new Teacher();
+            user.setAdmin(true);
+            return user;
         }
 
         @Override

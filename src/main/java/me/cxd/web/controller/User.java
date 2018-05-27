@@ -3,6 +3,7 @@ package me.cxd.web.controller;
 import me.cxd.bean.Teacher;
 import me.cxd.service.LoginValidator;
 import me.cxd.service.UserService;
+import me.cxd.web.authentic.NotSelf;
 import me.cxd.web.authentic.OnlineList;
 import me.cxd.web.authentic.RequiredLevel;
 import me.cxd.web.authentic.Self;
@@ -93,8 +94,9 @@ public class User {
     }
 
     @DeleteMapping("/user/{number}")
+    @NotSelf
     void remove(@PathVariable long number, HttpServletResponse response, HttpSession session) {
-        OnlineList onlineList = (OnlineList) session.getServletContext().getAttribute("user");
+        OnlineList onlineList = (OnlineList) session.getServletContext().getAttribute("onlineList");
         onlineList.offline(number);
         userService.remove(number);
         response.setStatus(HttpStatus.NO_CONTENT.value());
