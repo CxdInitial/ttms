@@ -17,12 +17,12 @@
         http://www.springframework.org/schema/context
         http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <bean name="validatorFactory" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
+    <bean class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
 
-    <bean name="hibernateValidator" class="org.hibernate.validator.HibernateValidator"/>
+    <bean class="org.hibernate.validator.HibernateValidator"/>
 
     <!--Bean的方法参数校验-->
-    <bean class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor"/>
+    <!--<bean class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor"/>-->
 
     <mvc:annotation-driven>
         <mvc:message-converters>
@@ -31,6 +31,8 @@
     </mvc:annotation-driven>
 
     <context:component-scan base-package="me.cxd"/>
+
+    <context:component-scan base-package="test.me.cxd"/>
 
     <aop:aspectj-autoproxy proxy-target-class="true"/>
 

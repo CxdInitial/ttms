@@ -20,27 +20,19 @@ public interface UserService extends LoginValidator {
         }
     }
 
-    @Override
-    default boolean isValidUser(long number, String password) {
-        return true;
-    }
+    boolean isValidUser(long number, String password);
 
-    default boolean register(Teacher teacher) {
-        return false;
-    }
+    boolean register(Teacher teacher);
 
-    default boolean update(long number, Map<String, ?> fieldValues) {
-        return true;
-    }
+    boolean update(long number, Map<String, ?> fieldValues);
 
-    default void remove(long number) {
-    }
+    void remove(long number);
 
-    default Teacher find(long number) {
-        return null;
-    }
+    Teacher find(long number);
 
-    default List<Teacher> find(Order order, long begIndex, long count) {
-        return List.of();
+    List<Teacher> find(Order order, long begIndex, long count);
+
+    default List<Teacher> find(Order order, long count) {
+        return find(order, 0, count);
     }
 }

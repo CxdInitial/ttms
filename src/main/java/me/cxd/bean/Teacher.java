@@ -8,9 +8,8 @@ import java.util.List;
 @Entity
 public class Teacher {
     @Min(1000000000)
-    @Max(1999999999)
+//    @Max(1999999999)
     @Id
-    @Null
     private long number;
 
     @Pattern(regexp = "^[\\u2E80-\\u9FFF]{2,5}$")

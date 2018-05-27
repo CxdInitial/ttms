@@ -35,16 +35,18 @@ public class User {
         return Arrays.stream(Teacher.class.getDeclaredFields()).map(Field::getName).collect(Collectors.toList());
     }
 
+    private void logout(HttpSession session) {
+        session.removeAttribute("user");
+    }
+
     @Autowired
-    public User(@Qualifier("loginValidator") LoginValidator loginValidator, UserService userService) {
+    public User(@Qualifier("additionalLoginValidator") LoginValidator loginValidator, UserService userService) {
         this.jwcLoginValidator = loginValidator;
         this.userService = userService;
     }
 
     @RequiredLevel(allow = RequiredLevel.Level.NOBODY)
     @PostMapping("/authentication")
-    @ResponseBody
-    @ResponseStatus
     void login(@Validated Teacher user, BindingResult bindingResult, HttpSession session, HttpServletResponse response) {
         if (bindingResult.hasFieldErrors("number") || bindingResult.hasFieldErrors("password")) {
             response.setStatus(HttpStatus.BAD_REQUEST.value()); //校验错误
@@ -60,14 +62,12 @@ public class User {
 
     @RequiredLevel(allow = RequiredLevel.Level.TEACHER)
     @DeleteMapping("/authentication")
-    @ResponseBody
     void logout(HttpSession session, HttpServletResponse response) {
-        session.removeAttribute("user");
+        logout(session);
         response.setStatus(HttpStatus.NO_CONTENT.value()); //退出成功
     }
 
     @PostMapping("/user")
-    @ResponseBody
     void register(@Validated Teacher teacher, HttpServletResponse response) {
         if (!userService.register(teacher))
             response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value()); //注册时错误（学工号冲突、手机号冲突）
@@ -77,11 +77,10 @@ public class User {
 
     @Self
     @PatchMapping("/user/{number}")
-    @ResponseBody
     void update(@PathVariable long number, @Validated Teacher teacher, BindingResult result, HttpSession session, HttpServletResponse response, @RequestParam Map<String, Object> map) {
         List<String> field = UserFieldNames();
         field.remove("number");
-        if (!map.entrySet().stream().allMatch(pair -> field.contains(pair.getKey()) && !result.hasFieldErrors(pair.getKey())) || map.isEmpty()) {
+        if (!map.entrySet().stream().allMatch(pair -> !pair.getKey().equals("number") && field.contains(pair.getKey()) && !result.hasFieldErrors(pair.getKey())) || map.isEmpty()) {
             response.setStatus(HttpStatus.BAD_REQUEST.value()); //数据错误
             return;
         }
@@ -90,11 +89,10 @@ public class User {
         else
             response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value()); //更新时错误（学工号冲突、手机号冲突）
         if (map.containsKey("password"))
-            session.removeAttribute("user");
+            logout(session);
     }
 
     @DeleteMapping("/user/{number}")
-    @ResponseBody
     void remove(@PathVariable long number, HttpServletResponse response, HttpSession session) {
         OnlineList onlineList = (OnlineList) session.getServletContext().getAttribute("user");
         onlineList.offline(number);

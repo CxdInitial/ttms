@@ -30,12 +30,9 @@ public class ActionLevelControl {
         this.defaultValue = defaultValue;
     }
 
-    @Autowired
     private long getLoginUserNo(OnlineList list, Object user) {
-        if (user instanceof Long) {
-            if (list.isOnline((Long) user))
+        if (user instanceof Long && list.isOnline((Long) user))
                 return (long) user;
-        }
         return -1;
     }
 
@@ -59,7 +56,7 @@ public class ActionLevelControl {
         }
     }
 
-    @Around("@within(org.springframework.stereotype.Controller)&&@annotation(level)||@within(level)")
+    @Around("@within(org.springframework.stereotype.Controller)&&(@within(level)||@annotation(level))")
     Object level(ProceedingJoinPoint pjp, RequiredLevel level) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) pjp.getSignature();
         if (level == null)

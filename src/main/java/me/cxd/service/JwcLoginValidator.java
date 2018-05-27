@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component("loginValidator")
+@Component("additionalLoginValidator")
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class JwcLoginValidator implements LoginValidator {
     private static final String LOGIN_URL = "http://jwcnew.nefu.edu.cn/dblydx_jsxsd/";
