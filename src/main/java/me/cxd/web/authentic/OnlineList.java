@@ -14,7 +14,7 @@ public class OnlineList {
         this.list = Collections.synchronizedSet(new HashSet<>());
     }
 
-    boolean isOnline(long number) {
+    public boolean isOnline(long number) {
         return list.contains(number);
     }
 

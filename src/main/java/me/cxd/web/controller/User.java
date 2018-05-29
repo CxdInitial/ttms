@@ -3,6 +3,7 @@ package me.cxd.web.controller;
 import me.cxd.bean.Teacher;
 import me.cxd.service.LoginValidator;
 import me.cxd.service.UserService;
+import me.cxd.util.FieldList;
 import me.cxd.web.authentic.NotSelf;
 import me.cxd.web.authentic.OnlineList;
 import me.cxd.web.authentic.RequiredLevel;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import javax.validation.constraints.Null;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.lang.reflect.Field;
@@ -27,26 +29,24 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://127.0.0.1:8010")
 @Controller
 @Valid
-@RequiredLevel(allow = RequiredLevel.Level.ADMIN)
+@RequiredLevel(RequiredLevel.Level.ADMIN)
 public class User {
     private final LoginValidator jwcLoginValidator;
     private final UserService userService;
-
-    private static List<String> UserFieldNames() {
-        return Arrays.stream(Teacher.class.getDeclaredFields()).map(Field::getName).collect(Collectors.toList());
-    }
+    private final FieldList<Teacher> userFieldNameList;
 
     private void logout(HttpSession session) {
         session.removeAttribute("user");
     }
 
     @Autowired
-    public User(@Qualifier("additionalLoginValidator") LoginValidator loginValidator, UserService userService) {
+    public User(@Qualifier("additionalLoginValidator") LoginValidator loginValidator, UserService userService, FieldList<Teacher> userFieldNameList) {
         this.jwcLoginValidator = loginValidator;
         this.userService = userService;
+        this.userFieldNameList = userFieldNameList;
     }
 
-    @RequiredLevel(allow = RequiredLevel.Level.NOBODY)
+    @RequiredLevel(RequiredLevel.Level.NOBODY)
     @PostMapping("/authentication")
     void login(@Validated Teacher user, BindingResult bindingResult, HttpSession session, HttpServletResponse response) {
         if (bindingResult.hasFieldErrors("number") || bindingResult.hasFieldErrors("password")) {
@@ -55,13 +55,15 @@ public class User {
         }
         if (userService.isValidUser(user.getNumber(), user.getPassword()))
             response.setStatus(HttpStatus.CREATED.value()); //成功
-        else if (jwcLoginValidator.isValidUser(user.getNumber(), user.getPassword()))
+        else if (jwcLoginValidator.isValidUser(user.getNumber(), user.getPassword())) {
             response.setStatus(HttpStatus.NOT_FOUND.value()); //未注册
-        else
+            if (userService.find(user.getNumber()) != null)
+                response.setStatus(HttpStatus.CREATED.value()); //成功
+        } else
             response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value()); //密码错误
     }
 
-    @RequiredLevel(allow = RequiredLevel.Level.TEACHER)
+    @RequiredLevel(RequiredLevel.Level.TEACHER)
     @DeleteMapping("/authentication")
     void logout(HttpSession session, HttpServletResponse response) {
         logout(session);
@@ -77,11 +79,11 @@ public class User {
     }
 
     @Self
+    @RequiredLevel(RequiredLevel.Level.TEACHER)
     @PatchMapping("/user/{number}")
     void update(@PathVariable long number, @Validated Teacher teacher, BindingResult result, HttpSession session, HttpServletResponse response, @RequestParam Map<String, Object> map) {
-        List<String> field = UserFieldNames();
-        field.remove("number");
-        if (!map.entrySet().stream().allMatch(pair -> !pair.getKey().equals("number") && field.contains(pair.getKey()) && !result.hasFieldErrors(pair.getKey())) || map.isEmpty()) {
+        Set<String> field = userFieldNameList.getFields().stream().filter(f -> f.getAnnotation(Null.class) == null && !f.getName().equals("number")).map(Field::getName).collect(Collectors.toSet());
+        if (!map.entrySet().stream().allMatch(pair -> field.contains(pair.getKey()) && !result.hasFieldErrors(pair.getKey())) || map.isEmpty()) {
             response.setStatus(HttpStatus.BAD_REQUEST.value()); //数据错误
             return;
         }
@@ -103,6 +105,7 @@ public class User {
     }
 
     @GetMapping("/user/{number}")
+    @RequiredLevel(RequiredLevel.Level.TEACHER)
     @ResponseBody
     Map<String, ?> get(@PathVariable long number, HttpServletResponse response) {
         Teacher user = userService.find(number);
@@ -113,18 +116,21 @@ public class User {
         throw new NoSuchElementException();
     }
 
-    @GetMapping("/users")
+    @GetMapping("/user")
     @ResponseBody
-    Map<String, ?> get(@RequestParam(defaultValue = "0") @PositiveOrZero long beginIndex, @RequestParam @Positive long count, @RequestParam String orderBy) {
+    Map<String, ?> get(@RequestParam(defaultValue = "0") long beginIndex, @RequestParam(defaultValue = "50") long count, @RequestParam(defaultValue = "number") String orderBy, HttpServletResponse response) {
         UserService.Order order;
         try {
             order = UserService.Order.valueOf(orderBy.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new NoSuchElementException();
         }
+        if (beginIndex < 0 || count <= 0)
+            throw new NoSuchElementException();
         List<Teacher> list = userService.find(order, beginIndex, count);
         if (list.isEmpty())
             throw new NoSuchElementException();
+        response.setStatus(HttpStatus.OK.value());
         return Collections.singletonMap("users", list);
     }
 }

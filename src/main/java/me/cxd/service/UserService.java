@@ -1,6 +1,7 @@
 package me.cxd.service;
 
 import me.cxd.bean.Teacher;
+import org.hibernate.mapping.Backref;
 
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,10 @@ public interface UserService extends LoginValidator {
         }
     }
 
-    boolean isValidUser(long number, String password);
+    default boolean isValidUser(long number, String password){
+        Teacher user = find(number);
+        return user != null && user.getPassword().equals(password);
+    }
 
     boolean register(Teacher teacher);
 

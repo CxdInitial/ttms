@@ -87,14 +87,14 @@ public class ActionLevelControl {
         Long loginNo = null;
         if (list instanceof OnlineList)
             loginNo = getLoginUserNo((OnlineList) list, session.getAttribute("user"));
-        if (level.allow() == RequiredLevel.Level.NOBODY)
+        if (level.value() == RequiredLevel.Level.NOBODY)
             exec = true;
         else if (loginNo != null) {
             Teacher teacher = userService.find(loginNo);
             if (teacher != null)
                 if (teacher.getAdmin())
                     exec = true;
-                else if (level.allow() == RequiredLevel.Level.TEACHER)
+                else if (level.value() == RequiredLevel.Level.TEACHER)
                     exec = true;
         }
         if (exec)

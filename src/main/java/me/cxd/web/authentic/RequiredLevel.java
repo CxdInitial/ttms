@@ -12,9 +12,5 @@ public @interface RequiredLevel {
         NOBODY, TEACHER, ADMIN
     }
 
-    @AliasFor("allow")
     Level value() default Level.TEACHER;
-
-    @AliasFor("value")
-    Level allow() default Level.TEACHER;
 }
