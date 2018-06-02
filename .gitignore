@@ -35,10 +35,10 @@ Temporary Items
 #---------------------------------------------------
 # Java
 
-# Compiled class file
+# Compiled class annex
 *.class
 
-# Log file
+# Log annex
 *.log
 
 # BlueJ files

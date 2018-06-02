@@ -45,7 +45,7 @@ public class JwcLoginValidator implements LoginValidator {
         post.setHeader("User-Agent", "Mozilla/5.0");
         post.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         post.setHeader("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3");
-        post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        post.setHeader("Content-AnnexType", "application/x-www-form-urlencoded");
     }
 
     public boolean isValidUser(long number, String password) {

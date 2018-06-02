@@ -5,7 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Entity
-public class File {
+public class Annex {
     @Id
     private long id;
 
@@ -13,11 +13,11 @@ public class File {
     private String path;
 
     @Column(nullable = false)
-    private String name;
+    private String fileName;
 
     private String hashcode;
 
-    private String type;
+    private String fileType;
 
     public String getPath() {
         return path;
@@ -27,12 +27,12 @@ public class File {
         this.path = path;
     }
 
-    public String getName() {
-        return name;
+    public String getFileName() {
+        return fileName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setFileName(String name) {
+        this.fileName = name;
     }
 
     public String getHashcode() {
@@ -43,12 +43,12 @@ public class File {
         this.hashcode = hashcode;
     }
 
-    public String getType() {
-        return type;
+    public String getFileType() {
+        return fileType;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setFileType(String type) {
+        this.fileType = type;
     }
 
     public long getId() {

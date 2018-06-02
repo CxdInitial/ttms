@@ -7,26 +7,29 @@ import java.util.List;
 
 @Entity
 public class Teacher {
-    @Min(1000000000)
-//    @Max(1999999999)
     @Id
-    private long number;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+
+    @Min(value = 1000000000L)
+    @NotNull
+    private long teacherNo;
 
     @Pattern(regexp = "^[\\u2E80-\\u9FFF]{2,5}$")
     @NotNull
     @Column(nullable = false)
-    private String name;
+    private String teacherName;
 
     @Pattern(regexp = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$")
     @NotNull
     @Column(nullable = false)
-    private String password;
+    private String loginPassword;
 
-    @Null
-    private boolean admin;
+    @Column(columnDefinition = "bit(1) not null default 0")
+    private boolean manager;
 
     @NotNull
-    @Column(nullable = false)
+    @Column(columnDefinition = "bit(1) not null default 1")
     private boolean male;
 
     @Pattern(regexp = "^((13[0-9])|(147,145)|(15(0,1,2,3,5,6,7,8,9))|(166)|(17[6-8])|(18[0-9])|(19[8-9]))[0-9]{8}$")
@@ -47,38 +50,40 @@ public class Teacher {
     @Null
     private List<SuperviseRecord> superviseRecords;
 
+    @OneToMany(mappedBy = "submitter")
     @Null
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    private List<Task> tasks;
+
+    @Null
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp default current_timestamp")
     private LocalDateTime insertTime;
 
     @Null
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "ON UPDATE CURRENT_TIMESTAMP")
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp on update current_timestamp")
     private LocalDateTime updateTime;
 
-    public String getName() {
-        return name;
+    public String getTeacherName() {
+        return teacherName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTeacherName(String name) {
+        this.teacherName = name;
     }
 
-    public String getPassword() {
-        return password;
+    public String getLoginPassword() {
+        return loginPassword;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setLoginPassword(String password) {
+        this.loginPassword = password;
     }
 
-    public boolean getAdmin() {
-        return admin;
+    public boolean getManager() {
+        return manager;
     }
 
-    public void setAdmin(boolean admin) {
-        this.admin = admin;
+    public void setManager(boolean admin) {
+        this.manager = admin;
     }
 
     public boolean getMale() {
@@ -105,12 +110,12 @@ public class Teacher {
         this.title = title;
     }
 
-    public long getNumber() {
-        return number;
+    public long getTeacherNo() {
+        return teacherNo;
     }
 
-    public void setNumber(long number) {
-        this.number = number;
+    public void setTeacherNo(long number) {
+        this.teacherNo = number;
     }
 
     public LocalDateTime getInsertTime() {
@@ -143,5 +148,21 @@ public class Teacher {
 
     public void setIntro(String intro) {
         this.intro = intro;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public List<Task> getTasks() {
+        return tasks;
+    }
+
+    public void setTasks(List<Task> tasks) {
+        this.tasks = tasks;
     }
 }

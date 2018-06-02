@@ -30,13 +30,7 @@ public class ActionLevelControl {
         this.defaultValue = defaultValue;
     }
 
-    private Long getLoginUserNo(OnlineList list, Object user) {
-        if (user instanceof Long && list.isOnline((Long) user))
-            return (long) user;
-        return null;
-    }
-
-    private Long getActionUserNo(ProceedingJoinPoint pjp) {
+    private Long getActionUserId(ProceedingJoinPoint pjp) {
         Parameter[] parameters = ((MethodSignature) pjp.getSignature()).getMethod().getParameters();
         Parameter action = Arrays.stream(parameters).filter(parameter -> parameter.getType().equals(long.class) && parameter.getAnnotation(PathVariable.class) != null).findFirst().orElse(null);
         Long current = null;
@@ -51,11 +45,11 @@ public class ActionLevelControl {
 
     @Around("@within(org.springframework.stereotype.Controller)&&@annotation(notSelf)")
     Object self(ProceedingJoinPoint pjp, NotSelf notSelf) throws Throwable {
-        Long action = getActionUserNo(pjp);
+        Long action = getActionUserId(pjp);
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
-        if (action != null && session.getServletContext().getAttribute("onlineList") instanceof OnlineList) {
-            Long no = getLoginUserNo((OnlineList) session.getServletContext().getAttribute("onlineList"), session.getAttribute("user"));
-            if (no != null && !no.equals(action))
+        if (action != null) {
+            Long loginId = (Long) session.getAttribute("user");
+            if (loginId != null && !loginId.equals(action))
                 return pjp.proceed(pjp.getArgs());
         }
         ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse().setStatus(HttpStatus.UNAUTHORIZED.value());
@@ -64,11 +58,11 @@ public class ActionLevelControl {
 
     @Around("@within(org.springframework.stereotype.Controller)&&@annotation(self)")
     Object self(ProceedingJoinPoint pjp, Self self) throws Throwable {
-        Long action = getActionUserNo(pjp);
+        Long action = getActionUserId(pjp);
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
-        if (action != null && session.getServletContext().getAttribute("onlineList") instanceof OnlineList) {
-            Long loginNo = getLoginUserNo((OnlineList) session.getServletContext().getAttribute("onlineList"), session.getAttribute("user"));
-            if (loginNo != null && loginNo.equals(action))
+        if (action != null) {
+            Long loginId = (Long) session.getAttribute("user");
+            if (loginId != null && loginId.equals(action))
                 return pjp.proceed(pjp.getArgs());
         }
         ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse().setStatus(HttpStatus.UNAUTHORIZED.value());
@@ -80,19 +74,15 @@ public class ActionLevelControl {
         MethodSignature methodSignature = (MethodSignature) pjp.getSignature();
         if (level == null)
             level = pjp.getTarget().getClass().getAnnotation(RequiredLevel.class);
-
         boolean exec = false;
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
-        Object list = session.getServletContext().getAttribute("onlineList");
-        Long loginNo = null;
-        if (list instanceof OnlineList)
-            loginNo = getLoginUserNo((OnlineList) list, session.getAttribute("user"));
+        Long loginId = (Long) session.getAttribute("user");
         if (level.value() == RequiredLevel.Level.NOBODY)
             exec = true;
-        else if (loginNo != null) {
-            Teacher teacher = userService.find(loginNo);
+        else if (loginId != null) {
+            Teacher teacher = userService.find(loginId);
             if (teacher != null)
-                if (teacher.getAdmin())
+                if (teacher.getManager())
                     exec = true;
                 else if (level.value() == RequiredLevel.Level.TEACHER)
                     exec = true;

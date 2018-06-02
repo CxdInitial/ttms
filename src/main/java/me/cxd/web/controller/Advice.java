@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
 
 @ControllerAdvice
 public class Advice {
-    @ExceptionHandler({BindException.class, ConstraintViolationException.class, TypeMismatchException.class})
+    @ExceptionHandler({BindException.class, ConstraintViolationException.class, TypeMismatchException.class, NumberFormatException.class})
     void invalidData(HttpServletResponse response, HandlerMethod method) {
         if (method.hasMethodAnnotation(GetMapping.class) || method.hasMethodAnnotation(DeleteMapping.class))
             response.setStatus(HttpStatus.NOT_FOUND.value());
@@ -24,7 +24,12 @@ public class Advice {
     }
 
     @ExceptionHandler(NoSuchElementException.class)
-    void notFound(HttpServletResponse response, HandlerMethod method) {
+    void notFound(HttpServletResponse response) {
         response.setStatus(HttpStatus.NOT_FOUND.value());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    void illegalParam(HttpServletResponse response) {
+        response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
     }
 }

@@ -2,31 +2,22 @@ package test.me.cxd.web.controller;
 
 import me.cxd.bean.Teacher;
 import me.cxd.service.UserService;
-import me.cxd.util.FieldList;
-import me.cxd.web.authentic.OnlineList;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
-import org.springframework.stereotype.Service;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit.jupiter.web.SpringJUnitWebConfig;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -34,12 +25,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Test different http status code returned by {@link me.cxd.web.controller.User} controller.
- * Notion: Before test, change the validation annotation on {@link me.cxd.bean.Teacher#number} (remove {@link javax.validation.constraints.Max}) to make sure that test data does't go wrong.
+ * Notion: Before test, change the validation annotation on {@link me.cxd.bean.Teacher#teacherNo} (remove {@link javax.validation.constraints.Max}) to make sure that test data does't go wrong.
  */
-@ActiveProfiles("testUserController")
 @SpringBootTest
 @WebAppConfiguration
 @SpringJUnitWebConfig(locations = "classpath:beans.xml")
+@Transactional
+@Rollback
 class UserControllerTest {
     private final WebApplicationContext wac;
     private final UserService userService;
@@ -51,49 +43,81 @@ class UserControllerTest {
     }
 
     private void seed() {
-        Teacher user;
-        user = new Teacher();
-        user.setNumber(2015224306L);
-        user.setPassword("2zhaoxuemei");
-        user.setAdmin(true);
-        user.setName("赵雪梅");
-        userService.register(user);
-        user = new Teacher();
-        user.setNumber(2015214287L);
-        user.setAdmin(false);
-        user.setName("曹兴鼎");
-        user.setPassword("2caoxingding");
-        userService.register(user);
+        Teacher teacher = new Teacher();
+        teacher.setLoginPassword("2caoxingding");
+        teacher.setMale(true);
+        teacher.setTeacherName("曹兴鼎");
+        teacher.setPhone("18845631192");
+        teacher.setTitle("教师");
+        teacher.setIntro("我是曹兴鼎");
+        teacher.setTeacherNo(2015214287L);
+        if (userService.findByNo(teacher.getTeacherNo()) == null)
+            userService.register(teacher);
+        teacher = new Teacher();
+        teacher.setLoginPassword("2zhaoxuemei");
+        teacher.setMale(true);
+        teacher.setTeacherName("赵雪梅");
+        teacher.setIntro("我是赵雪梅");
+        teacher.setPhone("18845891787");
+        teacher.setTitle("管理员");
+        teacher.setManager(true);
+        teacher.setTeacherNo(2015224306L);
+        if (userService.findByNo(teacher.getTeacherNo()) == null)
+            userService.register(teacher);
     }
 
-    private void rollback() {
-        userService.remove(2015214287L);
-        userService.remove(2015224306L);
-    }
-
-    private MockHttpSession online(long number) {
+    private MockHttpSession online(long id) {
+        ;
         MockHttpSession session = new MockHttpSession();
-        OnlineList list = new OnlineList();
-        list.online(number);
-        session.setAttribute("user", number);
-        session.getServletContext().setAttribute("onlineList", list);
+        session.setAttribute("user", id);
         return session;
     }
 
+    @SpringBootTest
     @Nested
+    @SpringJUnitWebConfig(locations = "classpath:beans.xml")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class GetTest {
+    @WebAppConfiguration
+    class UpdateTest {
+        private MockMvc mockMvc;
+
         @BeforeAll
-        void setData() {
+        void seedData() {
             seed();
         }
 
-        @AfterAll
-        void delData() {
-            rollback();
+        @BeforeEach
+        void setup() {
+            this.mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
         }
 
+        @ParameterizedTest
+        @ValueSource(longs = {2015214287L, 2015224306L})
+        void updateNumber_created(long number) throws Exception {
+            long id = userService.findByNo(number).getId();
+            MockHttpSession session = online(id);
+            mockMvc.perform(patch("/user/{id}", id).session(session).param("teacherNo", String.valueOf(number + 1)))
+                    .andExpect(status().is(HttpStatus.CREATED.value())).andReturn();
+            Assertions.assertNull(session.getAttribute("number"));
+            Assertions.assertEquals(number + 1, userService.find(id).getTeacherNo());
+            System.out.println("end");
+        }
+    }
+
+    @SpringBootTest
+    @Nested
+    @SpringJUnitWebConfig(locations = "classpath:beans.xml")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @WebAppConfiguration
+    @Transactional
+    @Rollback
+    class GetTest {
         private MockMvc mockMvc;
+
+        @BeforeAll
+        void seedData() {
+            seed();
+        }
 
         @BeforeEach
         void setup() {
@@ -103,37 +127,48 @@ class UserControllerTest {
         @ParameterizedTest
         @ValueSource(longs = {2015214287L, 2015224306L})
         void get_teacher(long number) throws Exception {
-            mockMvc.perform(get("/user/{number}", number).session(online(number)).accept(MediaType.APPLICATION_JSON_UTF8))
-                    .andExpect(jsonPath("$.user.name").value(userService.find(number).getName()));
+            long id = userService.findByNo(number).getId();
+            mockMvc.perform(get("/user/{id}", id).session(online(id)).accept(MediaType.APPLICATION_JSON_UTF8))
+                    .andExpect(jsonPath("$.user.teacherName").value(userService.findByNo(number).getTeacherName()));
         }
 
         @ParameterizedTest
         @EnumSource(UserService.Order.class)
         void get_orderedTeachers(UserService.Order order) throws Exception {
-            mockMvc.perform(get("/user").param("order", order.value()).session(online(2015224306L)).accept(MediaType.APPLICATION_JSON_UTF8))
-                    .andExpect(status().is(HttpStatus.OK.value()));
+            if (order != UserService.Order.BUSYNESS)
+                mockMvc.perform(get("/user").param("orderBy", order.value()).session(online(userService.findByNo(2015224306L).getId())).accept(MediaType.APPLICATION_JSON_UTF8))
+                        .andExpect(status().is(HttpStatus.OK.value()));
+            else
+                mockMvc.perform(get("/user").param("orderBy", order.value()).session(online(userService.findByNo(2015224306L).getId())).accept(MediaType.APPLICATION_JSON_UTF8))
+                        .andExpect(status().is(HttpStatus.NOT_FOUND.value()));
         }
 
         @Test
         void get_notFound() throws Exception {
-            mockMvc.perform(get("/user").param("count", String.valueOf(-1)).session(online(2015224306L)).accept(MediaType.APPLICATION_JSON_UTF8))
+            mockMvc.perform(get("/user").param("count", String.valueOf(-1)).session(online(userService.findByNo(2015224306L).getId())).accept(MediaType.APPLICATION_JSON_UTF8))
                     .andExpect(status().is(HttpStatus.NOT_FOUND.value()));
+        }
+
+        @Test
+        void get_count() throws Exception {
+            mockMvc.perform(get("/count/user").session(online(userService.findByNo(2015224306L).getId())).accept(MediaType.APPLICATION_JSON_UTF8)).andExpect(jsonPath("$.count").value("2"));
         }
     }
 
+
+    @SpringBootTest
     @Nested
+    @SpringJUnitWebConfig(locations = "classpath:beans.xml")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @WebAppConfiguration
+    @Transactional
+    @Rollback
     class RemoveTest {
         private MockMvc mockMvc;
 
         @BeforeAll
-        void setData() {
+        void seedData() {
             seed();
-        }
-
-        @AfterAll
-        void delData() {
-            rollback();
         }
 
         @BeforeEach
@@ -144,41 +179,41 @@ class UserControllerTest {
         @ParameterizedTest
         @ValueSource(longs = {2015214287L})
         void remove_noContent(long removeUserNo) throws Exception {
-            mockMvc.perform(delete("/user/{number}", removeUserNo)
-                    .session(online(2015224306L))
+            mockMvc.perform(delete("/user/{id}", userService.findByNo(removeUserNo).getId())
+                    .session(online(userService.findByNo(2015224306L).getId()))
             ).andExpect(status().is(HttpStatus.NO_CONTENT.value()));
         }
 
         @ParameterizedTest
         @ValueSource(longs = {2015224306L})
         void remove_unauthorized(long removeUserNo) throws Exception {
-            mockMvc.perform(delete("/user/{number}", removeUserNo)
+            mockMvc.perform(delete("/user/{id}", userService.findByNo(removeUserNo).getId())
             ).andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
         }
 
         @ParameterizedTest
         @ValueSource(longs = {2015224306L})
         void removeSelf_unauthorized(long removeUserNo) throws Exception {
-            mockMvc.perform(delete("/user/{number}", removeUserNo)
-                    .session(online(removeUserNo))
+            mockMvc.perform(delete("/user/{id}", userService.findByNo(removeUserNo).getId())
+                    .session(online(userService.findByNo(2015224306L).getId()))
             ).andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
         }
     }
 
+
+    @SpringBootTest
     @Nested
+    @SpringJUnitWebConfig(locations = "classpath:beans.xml")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @WebAppConfiguration
+    @Transactional
+    @Rollback
     class LoginTest {
         private MockMvc mockMvc;
 
         @BeforeAll
-        void setData() {
+        void seedData() {
             seed();
-            userService.remove(2015214287L);
-        }
-
-        @AfterAll
-        void delData() {
-            rollback();
         }
 
         @BeforeEach
@@ -191,9 +226,10 @@ class UserControllerTest {
         void login_notFound(String numberAndPassword) throws Exception {
             String number = numberAndPassword.substring(0, numberAndPassword.indexOf(':'));
             String password = numberAndPassword.substring(numberAndPassword.indexOf(':') + 1);
+            userService.remove(userService.findByNo(Long.valueOf(number)).getId());
             mockMvc.perform(post("/authentication")
-                    .param("number", number)
-                    .param("password", password)
+                    .param("teacherNo", number)
+                    .param("loginPassword", password)
                     .accept(MediaType.APPLICATION_JSON_UTF8)
             ).andExpect(status().is(HttpStatus.NOT_FOUND.value()));
         }
@@ -204,8 +240,8 @@ class UserControllerTest {
             String number = numberAndPassword.substring(0, numberAndPassword.indexOf(':'));
             String password = numberAndPassword.substring(numberAndPassword.indexOf(':') + 1);
             mockMvc.perform(post("/authentication")
-                    .param("number", number)
-                    .param("password", password)
+                    .param("teacherNo", number)
+                    .param("loginPassword", password)
                     .accept(MediaType.APPLICATION_JSON_UTF8)
             ).andExpect(status().is(HttpStatus.CREATED.value()));
         }
@@ -216,8 +252,8 @@ class UserControllerTest {
             String number = numberAndPassword.substring(0, numberAndPassword.indexOf(':'));
             String password = numberAndPassword.substring(numberAndPassword.indexOf(':') + 1);
             mockMvc.perform(post("/authentication")
-                    .param("number", number)
-                    .param("password", password)
+                    .param("teacherNo", number)
+                    .param("loginPassword", password)
                     .accept(MediaType.APPLICATION_JSON_UTF8)
             ).andExpect(status().is(HttpStatus.BAD_REQUEST.value()));
         }
@@ -228,26 +264,27 @@ class UserControllerTest {
             String number = numberAndPassword.substring(0, numberAndPassword.indexOf(':'));
             String password = numberAndPassword.substring(numberAndPassword.indexOf(':') + 1);
             mockMvc.perform(post("/authentication")
-                    .param("number", number)
-                    .param("password", password)
+                    .param("teacherNo", number)
+                    .param("loginPassword", password)
                     .accept(MediaType.APPLICATION_JSON_UTF8)
             ).andExpect(status().is(HttpStatus.UNPROCESSABLE_ENTITY.value()));
         }
     }
 
+
+    @SpringBootTest
     @Nested
+    @SpringJUnitWebConfig(locations = "classpath:beans.xml")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @WebAppConfiguration
+    @Transactional
+    @Rollback
     class LogoutTest {
         private MockMvc mockMvc;
 
         @BeforeAll
-        void setData() {
+        void seedData() {
             seed();
-        }
-
-        @AfterAll
-        void delData() {
-            rollback();
         }
 
         @BeforeEach
@@ -257,7 +294,7 @@ class UserControllerTest {
 
         @Test
         void logout_noContent() throws Exception {
-            MockHttpSession session = online(2015214287);
+            MockHttpSession session = online(userService.findByNo(2015214287L).getId());
             mockMvc.perform(
                     delete("/authentication").session(session))
                     .andExpect(status().is(HttpStatus.NO_CONTENT.value()));
@@ -267,97 +304,6 @@ class UserControllerTest {
         void logout_unauthorized() throws Exception {
             mockMvc.perform(delete("/authentication"))
                     .andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
-        }
-    }
-
-    @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    class UpdateTest {
-        private MockMvc mockMvc;
-
-        @BeforeAll
-        void setData() {
-            seed();
-        }
-
-        @AfterAll
-        void delData() {
-            rollback();
-        }
-
-        @BeforeEach
-        void setup() {
-            this.mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
-        }
-
-        @ParameterizedTest
-        @ValueSource(strings = {"2015214287:2caoxingding", "2015224306:2zhaoxuemei"})
-        void updatePassword_created(String numberAndPassword) throws Exception {
-            String number = numberAndPassword.substring(0, numberAndPassword.indexOf(':'));
-            String password = numberAndPassword.substring(numberAndPassword.indexOf(':') + 1);
-            String newPassword = "new" + password;
-            MockHttpSession session = online(Long.valueOf(number));
-            mockMvc.perform(patch("/user/{number}", number).session(session).param("password", newPassword))
-                    .andExpect(status().is(HttpStatus.CREATED.value()));
-            Assertions.assertNull(session.getAttribute("number"));
-            Assertions.assertEquals(userService.find(Long.valueOf(number)).getPassword(), newPassword);
-        }
-    }
-
-    @Profile("testUserController")
-    @Service
-    public static class UserServiceImpl implements me.cxd.service.UserService {
-        private final Set<Teacher> set;
-        private final FieldList<Teacher> fieldList;
-
-        @Autowired
-        public UserServiceImpl(FieldList<Teacher> fieldList) {
-            this.fieldList = fieldList;
-            this.set = new HashSet<>();
-        }
-
-        @Override
-        public boolean register(Teacher teacher) {
-            if (!set.stream().mapToLong(Teacher::getNumber).filter(n -> ((Long) n).equals(teacher.getNumber())).findAny().isPresent()) {
-                set.add(teacher);
-                return true;
-            } else
-                return false;
-        }
-
-        @Override
-        public boolean update(long number, Map<String, ?> fieldValues) {
-            Map<String, Class> classes = fieldList.getFields().stream().collect(Collectors.toMap(Field::getName, Field::getType));
-            for (Map.Entry<String, ?> entry : fieldValues.entrySet()) {
-                if (!classes.containsKey(entry.getKey()) || !classes.get(entry.getKey()).equals(entry.getValue().getClass()))
-                    return false;
-            }
-            Teacher user = find(number);
-            Map<String, Method> setters = fieldList.getSetters();
-            for (Map.Entry<String, ?> pair : fieldValues.entrySet()) {
-                try {
-                    setters.get(pair.getKey()).invoke(user, pair.getValue());
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @Override
-        public void remove(long number) {
-            set.removeIf(teacher -> teacher.getNumber() == number);
-        }
-
-        @Override
-        public Teacher find(long number) {
-            return set.stream().filter(teacher -> ((Long) number).equals(teacher.getNumber())).findFirst().orElse(null);
-        }
-
-        @Override
-        public List<Teacher> find(Order order, long begIndex, long count) {
-            return set.stream().sorted(Comparator.comparingLong(Teacher::getNumber)).collect(Collectors.toList());
         }
     }
 }

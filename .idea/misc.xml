@@ -7,7 +7,7 @@
     </list>
   </component>
   <component name="FrameworkDetectionExcludesConfiguration">
-    <file type="web" url="file://$PROJECT_DIR$/../SpringMVC" />
+    <file type="web" url="file://$PROJECT_DIR$" />
   </component>
   <component name="MavenProjectsManager">
     <option name="originalFiles">
@@ -16,7 +16,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_9" default="true" project-jdk-name="9.0" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_9" default="true" project-jdk-name="9" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/../SpringMVC/out" />
   </component>
 </project>

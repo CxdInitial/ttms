@@ -20,39 +20,35 @@ public class Task {
     @Column(nullable = false)
     @Lob
     @NotBlank
-    private String text;
+    private String content;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Future
     private LocalDateTime deadline;
 
-    @Column(columnDefinition = "default 1")
+    @Column(columnDefinition = "bit(1) null default 1")
     private boolean permitDelay;
 
-    @ManyToOne
-    @Column(nullable = false)
+    @ManyToOne(optional = false)
     @NotBlank
-    private Type requiredFileType;
+    private AnnexType requiredAnnexType;
 
-    @Column(columnDefinition = "default 1")
-    private boolean strictFileType;
+    @Column(columnDefinition = "bit(1) null default 1")
+    private boolean strictMode;
 
     @Null
     @OneToMany
-    private List<File> annexes;
+    private List<Annex> annexes;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @Null
     private Teacher submitter;
 
     @Null
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp null default current_timestamp")
     private LocalDateTime insertTime;
 
     @Null
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "ON UPDATE CURRENT_TIMESTAMP")
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp null on update current_timestamp")
     private LocalDateTime updateTime;
 
     public long getId() {
@@ -71,12 +67,12 @@ public class Task {
         this.title = title;
     }
 
-    public String getText() {
-        return text;
+    public String getContent() {
+        return content;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void setContent(String text) {
+        this.content = text;
     }
 
     public LocalDateTime getDeadline() {
@@ -95,11 +91,11 @@ public class Task {
         this.permitDelay = permitDelay;
     }
 
-    public List<File> getAnnexes() {
+    public List<Annex> getAnnexes() {
         return annexes;
     }
 
-    public void setAnnexes(List<File> annexes) {
+    public void setAnnexes(List<Annex> annexes) {
         this.annexes = annexes;
     }
 
@@ -111,20 +107,20 @@ public class Task {
         this.submitter = submitter;
     }
 
-    public Type getRequiredFileType() {
-        return requiredFileType;
+    public AnnexType getRequiredAnnexType() {
+        return requiredAnnexType;
     }
 
-    public void setRequiredFileType(Type requiredFileType) {
-        this.requiredFileType = requiredFileType;
+    public void setRequiredAnnexType(AnnexType requiredFileAnnexType) {
+        this.requiredAnnexType = requiredFileAnnexType;
     }
 
-    public boolean isStrictFileType() {
-        return strictFileType;
+    public boolean isStrictMode() {
+        return strictMode;
     }
 
-    public void setStrictFileType(boolean strictFileType) {
-        this.strictFileType = strictFileType;
+    public void setStrictMode(boolean strictFileType) {
+        this.strictMode = strictFileType;
     }
 
     public LocalDateTime getInsertTime() {

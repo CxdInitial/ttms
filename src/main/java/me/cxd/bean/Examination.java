@@ -15,8 +15,8 @@ public class Examination {
 
     @FutureOrPresent
     @NotNull
-    @Temporal(TemporalType.DATE)
-    private LocalDate date;
+    @Column(nullable = false)
+    private LocalDate examDate;
 
     @NotBlank
     @NotNull
@@ -25,48 +25,40 @@ public class Examination {
     @Min(1)
     @Max(11)
     @NotNull
-    private short begin;
+    @Column(nullable = false)
+    private short beginNo;
 
     @Min(1)
     @Max(11)
     @NotNull
-    private short end;
+    @Column(nullable = false)
+    private short endNo;
 
     @AssertTrue
     public boolean validateTime() {
-        if (end < begin)
+        if (endNo < beginNo)
             return false;
-        if (begin <= 4)
-            return end <= 4;
-        if (begin <= 8)
-            return end >= 5 && end <= 8;
-        return end >= 9;
+        if (beginNo <= 4)
+            return endNo <= 4;
+        if (beginNo <= 8)
+            return endNo >= 5 && endNo <= 8;
+        return endNo >= 9;
     }
 
-    @Min(0)
-    @NotNull
-    private short count;
-
-    @Pattern(regexp = "^((丹青)|(成栋)|(锦绣))楼$")
-    @NotNull
-    private String area;
-
-    @Pattern(regexp = "^([1-9]|(1[0-4]))((0[1-9])|(1[0-9])|(2[0-9])|3[0-6])$")
-    @NotNull
-    private String classroom;
+    @Null
+    @ManyToOne(optional = false)
+    private Classroom classroom;
 
     @Null
-    @OneToMany(mappedBy = "examination")
+    @OneToMany(mappedBy = "examination", fetch = FetchType.EAGER)
     private List<SuperviseRecord> superviseRecords;
 
     @Null
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp null default current_timestamp")
     private LocalDateTime insertTime;
 
     @Null
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "ON UPDATE CURRENT_TIMESTAMP")
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp null on update current_timestamp")
     private LocalDateTime updateTime;
 
     public String getCourse() {
@@ -77,44 +69,20 @@ public class Examination {
         this.course = course;
     }
 
-    public short getBegin() {
-        return begin;
+    public short getBeginNo() {
+        return beginNo;
     }
 
-    public void setBegin(short begin) {
-        this.begin = begin;
+    public void setBeginNo(short begin) {
+        this.beginNo = begin;
     }
 
-    public short getEnd() {
-        return end;
+    public short getEndNo() {
+        return endNo;
     }
 
-    public void setEnd(short end) {
-        this.end = end;
-    }
-
-    public short getCount() {
-        return count;
-    }
-
-    public void setCount(short count) {
-        this.count = count;
-    }
-
-    public String getArea() {
-        return area;
-    }
-
-    public void setArea(String area) {
-        this.area = area;
-    }
-
-    public String getClassroom() {
-        return classroom;
-    }
-
-    public void setClassroom(String classroom) {
-        this.classroom = classroom;
+    public void setEndNo(short end) {
+        this.endNo = end;
     }
 
     public int getId() {
@@ -125,12 +93,12 @@ public class Examination {
         this.id = id;
     }
 
-    public LocalDate getDate() {
-        return date;
+    public LocalDate getExamDate() {
+        return examDate;
     }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
+    public void setExamDate(LocalDate date) {
+        this.examDate = date;
     }
 
     public LocalDateTime getUpdateTime() {
@@ -155,5 +123,13 @@ public class Examination {
 
     public void setSuperviseRecords(List<SuperviseRecord> superviseRecords) {
         this.superviseRecords = superviseRecords;
+    }
+
+    public Classroom getClassroom() {
+        return classroom;
+    }
+
+    public void setClassroom(Classroom classroom) {
+        this.classroom = classroom;
     }
 }

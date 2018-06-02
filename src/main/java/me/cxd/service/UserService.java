@@ -1,14 +1,17 @@
 package me.cxd.service;
 
 import me.cxd.bean.Teacher;
-import org.hibernate.mapping.Backref;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public interface UserService extends LoginValidator {
+    /**
+     * Order used by {@link UserService#find(Order, int, int, boolean)} to order the user list.
+     */
     enum Order {
-        NUMBER("number"), TITLE("title"), BUSYNESS("busyness");
+        NUMBER("teacherNo"), TITLE("title"), BUSYNESS("busyness");
 
         private final String val;
 
@@ -21,22 +24,75 @@ public interface UserService extends LoginValidator {
         }
     }
 
-    default boolean isValidUser(long number, String password){
-        Teacher user = find(number);
-        return user != null && user.getPassword().equals(password);
+    default boolean isValidUser(long no, String password) {
+        Teacher user = findByNo(no);
+        return user != null && user.getLoginPassword().equals(password);
     }
 
-    boolean register(Teacher teacher);
+    /**
+     * @param teacher: new teacher to be registered
+     * @throws IllegalArgumentException: user's no or phone has already been registered
+     */
+    void register(Teacher teacher) throws IllegalArgumentException;
 
-    boolean update(long number, Map<String, ?> fieldValues);
+    /**
+     * Update the teacher whose id is {@param id} with the given content {@param fieldValues}.
+     * <p>
+     * Whoever call this method should make sure {@param fieldValues} is validated， or prepare to handle exceptions may be thrown
+     * (Not only {@link NoSuchElementException} {@link IllegalArgumentException}, but also exceptions associated with data access),
+     * this method would not do any validation job.
+     *
+     * @param id:          teacher's id
+     * @param fieldValues: pairs(field name and field value) to be updated
+     * @throws NoSuchElementException:   when id has no matched teacher
+     * @throws IllegalArgumentException: when the new phone or no has already been used
+     */
+    void update(long id, Map<String, ?> fieldValues) throws NoSuchElementException, IllegalArgumentException;
 
-    void remove(long number);
+    /**
+     * Remove the teacher whose no is {@param no}.
+     *
+     * @param id: the id of the teacher to be removed
+     * @throws NoSuchElementException: the id has no matcher teacher
+     */
+    void remove(long id) throws NoSuchElementException;
 
-    Teacher find(long number);
+    /**
+     * Find the teacher whose id is {@param id}.
+     *
+     * @param id: the id of the teacher to be found
+     * @return found teacher
+     */
+    Teacher find(long id);
 
-    List<Teacher> find(Order order, long begIndex, long count);
+    /**
+     * Find the teacher whose phone number is {@param phoneNumber}.
+     *
+     * @param phoneNumber: the phone number of the teacher to be found
+     * @return found teacher
+     */
+    Teacher findByPhone(String phoneNumber);
 
-    default List<Teacher> find(Order order, long count) {
-        return find(order, 0, count);
-    }
+    /**
+     * Find the teacher whose teacher number is {@param teacherNo}.
+     *
+     * @param teacherNo: the teacher number of the teacher to be found
+     * @return found teacher
+     */
+    Teacher findByNo(long teacherNo);
+
+    /**
+     * Find first {@param count} teachers from index {@param begIndex} to the end by order {@param order}.
+     *
+     * @param order:    sorting order
+     * @param begIndex: begin index
+     * @param count:    retrieve count
+     * @return list of teacher
+     */
+    List<Teacher> find(Order order, int begIndex, int count, boolean asc);
+
+    /**
+     * @return the count of all users.
+     */
+    long countUser();
 }

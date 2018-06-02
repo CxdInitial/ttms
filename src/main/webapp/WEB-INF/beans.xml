@@ -19,7 +19,7 @@
 
     <bean class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
 
-    <bean class="org.hibernate.validator.HibernateValidator"/>
+    <bean class="org.hibernate."/>
 
     <!--Bean的方法参数校验-->
     <bean class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor"/>
@@ -30,11 +30,19 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
+    <tx:annotation-driven proxy-target-class="true" transaction-manager="jpaTransactionManager"/>
 
+    <bean name="entityManagerFactoryBean" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="persistenceUnitName" value="se"/>
+    </bean>
+
+    <bean name="jpaTransactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactoryBean"/>
+    </bean>
+
+    <context:annotation-config/>
 
     <context:component-scan base-package="me.cxd"/>
 
     <aop:aspectj-autoproxy proxy-target-class="true"/>
-
-    <tx:annotation-driven proxy-target-class="true"/>
 </beans>

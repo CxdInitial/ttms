@@ -3,14 +3,14 @@ package me.cxd.bean;
 import javax.persistence.*;
 
 @Entity
-public class Type {
+public class AnnexType {
     @Id
     private int id;
 
     @Column(nullable = false)
     private String hex;
 
-    @Column(columnDefinition = "default 0")
+    @Column(columnDefinition = "bit(1) null default 0")
     private long offset;
 
     @Column(nullable = false)

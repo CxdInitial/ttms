@@ -11,36 +11,33 @@ public class Reply {
     @Null
     private long id;
 
-    @OneToOne
-    @Column(nullable = false)
+    @OneToOne(optional = false)
     @Null
     private Teacher replier;
 
-    @OneToOne
-    @Column(nullable = false)
+    @OneToOne(optional = false)
     @Null
     private Task task;
 
     @Lob
     @Column(nullable = false)
     @NotBlank
-    private String text;
+    private String content;
 
     @OneToOne
     @Null
-    private File file;
+    private Annex annex;
 
     @Null
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp null default current_timestamp")
     private LocalDateTime insertTime;
 
-    public File getFile() {
-        return file;
+    public Annex getAnnex() {
+        return annex;
     }
 
-    public void setFile(File file) {
-        this.file = file;
+    public void setAnnex(Annex annex) {
+        this.annex = annex;
     }
 
     public long getId() {
@@ -67,12 +64,12 @@ public class Reply {
         this.task = task;
     }
 
-    public String getText() {
-        return text;
+    public String getContent() {
+        return content;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void setContent(String text) {
+        this.content = text;
     }
 
     public LocalDateTime getInsertTime() {

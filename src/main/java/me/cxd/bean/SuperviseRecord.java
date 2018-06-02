@@ -5,24 +5,23 @@ import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 
 @Entity
+@Table
 public class SuperviseRecord {
     @PositiveOrZero
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     private Teacher supervisor;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Examination examination;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp null default current_timestamp")
     private LocalDateTime insertTime;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(insertable = false, updatable = false, columnDefinition = "ON UPDATE CURRENT_TIMESTAMP")
+    @Column(insertable = false, updatable = false, columnDefinition = "timestamp null on update current_timestamp")
     private LocalDateTime updateTime;
 
     public int getId() {
