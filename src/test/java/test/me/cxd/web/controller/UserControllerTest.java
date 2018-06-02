@@ -135,12 +135,9 @@ class UserControllerTest {
         @ParameterizedTest
         @EnumSource(UserService.Order.class)
         void get_orderedTeachers(UserService.Order order) throws Exception {
-            if (order != UserService.Order.BUSYNESS)
-                mockMvc.perform(get("/user").param("orderBy", order.value()).session(online(userService.findByNo(2015224306L).getId())).accept(MediaType.APPLICATION_JSON_UTF8))
-                        .andExpect(status().is(HttpStatus.OK.value()));
-            else
-                mockMvc.perform(get("/user").param("orderBy", order.value()).session(online(userService.findByNo(2015224306L).getId())).accept(MediaType.APPLICATION_JSON_UTF8))
-                        .andExpect(status().is(HttpStatus.NOT_FOUND.value()));
+            mockMvc.perform(get("/user").param("orderBy", order.value()).session(online(userService.findByNo(2015224306L).getId())).accept(MediaType.APPLICATION_JSON_UTF8))
+                    .andExpect(status().is(HttpStatus.OK.value()))
+                    .andExpect(jsonPath("$.users.length()").value(2));
         }
 
         @Test

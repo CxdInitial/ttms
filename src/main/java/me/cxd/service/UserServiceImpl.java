@@ -13,6 +13,7 @@ import javax.persistence.PersistenceException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -94,12 +95,12 @@ public class UserServiceImpl implements UserService {
                 query.orderBy(builder.desc(root.get(order.value())));
             return entityManager.createQuery(query).setFirstResult(begIndex).setMaxResults(count).getResultList();
         }
-        List<List> lists;
+        List<BigInteger> ids;
         if (asc)
-            lists = superviseDao.getEntityManager().createQuery("select s.supervisor,count(s.examination) as c from SuperviseRecord s where s.examination.examDate > :today group by s.supervisor order by c asc").setParameter("today", LocalDate.now()).setFirstResult(begIndex).setMaxResults(count).getResultList();
+            ids = superviseDao.getEntityManager().createNativeQuery("select userId from (select t.id as userId,count(s.id) as c from teacher as t left join superviserecord as s on t.id=s.supervisor_id group by t.id order by c asc) temp").getResultList();
         else
-            lists = superviseDao.getEntityManager().createQuery("select s.supervisor,count(s.examination) as c from SuperviseRecord s where s.examination.examDate > :today group by s.supervisor order by c desc").setParameter("today", LocalDate.now()).setFirstResult(begIndex).setMaxResults(count).getResultList();
-        return lists.stream().map(l -> ((Teacher) l.get(0))).collect(Collectors.toList());
+            ids = superviseDao.getEntityManager().createNativeQuery("select userId from (select t.id as userId,count(s.id) as c from teacher as t left join superviserecord as s on t.id=s.supervisor_id group by t.id order by c desc) temp").getResultList();
+        return ids.stream().map(BigInteger::longValue).map(userDao::read).collect(Collectors.toList());
     }
 
     @Override
