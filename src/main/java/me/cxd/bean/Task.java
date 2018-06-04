@@ -10,7 +10,6 @@ import java.util.List;
 @Entity
 public class Task {
     @Id
-    @Null
     private long id;
 
     @Column(nullable = false)
@@ -25,7 +24,7 @@ public class Task {
     @Future
     private LocalDateTime deadline;
 
-    @Column(columnDefinition = "bit(1) null default 1")
+    @Column(columnDefinition = "bit(1) not null default 1")
     private boolean permitDelay;
 
     @ManyToOne(optional = false)

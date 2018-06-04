@@ -67,7 +67,6 @@ class UserControllerTest {
     }
 
     private MockHttpSession online(long id) {
-        ;
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("user", id);
         return session;
@@ -152,7 +151,6 @@ class UserControllerTest {
         }
     }
 
-
     @SpringBootTest
     @Nested
     @SpringJUnitWebConfig(locations = "classpath:beans.xml")
@@ -196,7 +194,6 @@ class UserControllerTest {
             ).andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
         }
     }
-
 
     @SpringBootTest
     @Nested
@@ -267,7 +264,6 @@ class UserControllerTest {
             ).andExpect(status().is(HttpStatus.UNPROCESSABLE_ENTITY.value()));
         }
     }
-
 
     @SpringBootTest
     @Nested

@@ -1,5 +1,7 @@
 package me.cxd.bean;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.time.LocalDate;
@@ -8,11 +10,11 @@ import java.util.List;
 
 @Entity
 public class Examination {
-    @Null
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private long id;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @FutureOrPresent
     @NotNull
     @Column(nullable = false)
@@ -23,13 +25,13 @@ public class Examination {
     private String course;
 
     @Min(1)
-    @Max(11)
+    @Max(12)
     @NotNull
     @Column(nullable = false)
     private short beginNo;
 
     @Min(1)
-    @Max(11)
+    @Max(12)
     @NotNull
     @Column(nullable = false)
     private short endNo;
@@ -45,12 +47,18 @@ public class Examination {
         return endNo >= 9;
     }
 
-    @Null
-    @ManyToOne(optional = false)
-    private Classroom classroom;
+    @NotNull
+    @Pattern(regexp = "^((丹青)|(成栋)|(锦绣))楼$")
+    @Column(nullable = false)
+    private String area;
+
+    @NotNull
+    @Pattern(regexp = "^([1-9]|(1[0-4]))((0[1-9])|(1[0-9])|(2[0-9])|3[0-6])$")
+    @Column(nullable = false)
+    private String classroomNo;
 
     @Null
-    @OneToMany(mappedBy = "examination", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "examination")
     private List<SuperviseRecord> superviseRecords;
 
     @Null
@@ -85,11 +93,11 @@ public class Examination {
         this.endNo = end;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -125,11 +133,19 @@ public class Examination {
         this.superviseRecords = superviseRecords;
     }
 
-    public Classroom getClassroom() {
-        return classroom;
+    public String getClassroomNo() {
+        return classroomNo;
     }
 
-    public void setClassroom(Classroom classroom) {
-        this.classroom = classroom;
+    public void setClassroomNo(String classroomNo) {
+        this.classroomNo = classroomNo;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
     }
 }

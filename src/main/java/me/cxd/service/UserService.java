@@ -47,7 +47,7 @@ public interface UserService extends LoginValidator {
      * @throws NoSuchElementException:   when id has no matched teacher
      * @throws IllegalArgumentException: when the new phone or no has already been used
      */
-    void update(long id, Map<String, ?> fieldValues) throws NoSuchElementException, IllegalArgumentException;
+    void update(long id, Map<String, String> fieldValues) throws NoSuchElementException, IllegalArgumentException;
 
     /**
      * Remove the teacher whose no is {@param no}.

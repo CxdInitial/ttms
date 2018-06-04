@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void update(long id, Map<String, ?> fieldValues) throws NoSuchElementException, IllegalArgumentException {
+    public void update(long id, Map<String, String> fieldValues) throws NoSuchElementException, IllegalArgumentException {
         if (find(id) == null)
             throw new NoSuchElementException("Found no user with id: " + id);
         try {

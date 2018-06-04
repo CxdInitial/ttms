@@ -6,7 +6,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.Id;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaUpdate;
+import javax.persistence.criteria.Root;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
@@ -45,13 +47,18 @@ public class JpaDaoImpl<T> implements JpaDao<T> {
     }
 
     @Override
-    public void update(long id, Map<String, ?> fields) {
+    public void update(long id, Map<String, String> fields) {
         entityManager.createQuery(String.format("update %s set %s where id=%d", clz.getSimpleName(), fields.entrySet().stream().map(field -> field.getKey() + "=" + String.valueOf(field.getValue())).reduce((a, b) -> a + "," + b).get(), id)).executeUpdate();
     }
 
     @Override
     public void delete(long id) {
-        entityManager.remove(entityManager.find(clz, id));
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaDelete<T> delete = builder.createCriteriaDelete(clz);
+        Root<T> root = delete.from(clz);
+        delete.where(builder.equal(root.get("id"), id));
+        assert 1 == entityManager.createQuery(delete).executeUpdate();
+        entityManager.flush();
     }
 
     @Override

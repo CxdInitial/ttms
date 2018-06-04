@@ -9,7 +9,7 @@ public interface Crud<T> {
 
     void update(long id, T t);
 
-    void update(long id, Map<String, ?> fields);
+    void update(long id, Map<String, String> fields);
 
     void delete(long id);
 }

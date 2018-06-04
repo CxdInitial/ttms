@@ -4,9 +4,7 @@ import me.cxd.bean.Teacher;
 import me.cxd.service.LoginValidator;
 import me.cxd.service.UserService;
 import me.cxd.util.FieldList;
-import me.cxd.web.authentic.NotSelf;
-import me.cxd.web.authentic.RequiredLevel;
-import me.cxd.web.authentic.Self;
+import me.cxd.web.authentic.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -71,10 +69,9 @@ public class User {
         response.setStatus(HttpStatus.CREATED.value()); //注册成功
     }
 
-    @Self
-    @RequiredLevel(RequiredLevel.Level.TEACHER)
+    @SelfOrAdmin
     @PatchMapping("/user/{id}")
-    void update(@PathVariable long id, @Validated Teacher teacher, BindingResult result, HttpSession session, HttpServletResponse response, @RequestParam Map<String, Object> map) {
+    void update(@PathVariable long id, @Validated Teacher teacher, BindingResult result, HttpSession session, HttpServletResponse response, @RequestParam Map<String, String> map) {
         Set<String> fields = userFieldNameList.getFields().stream().filter(f -> f.getAnnotation(Null.class) == null).map(Field::getName).collect(Collectors.toSet());
         if (!map.entrySet().stream().allMatch(pair -> fields.contains(pair.getKey()) && !result.hasFieldErrors(pair.getKey())) || map.isEmpty()) {
             response.setStatus(HttpStatus.BAD_REQUEST.value()); //数据错误
@@ -87,7 +84,7 @@ public class User {
     }
 
     @DeleteMapping("/user/{id}")
-    @NotSelf
+    @NotSelfAndAdmin
     void remove(@PathVariable long id, HttpServletResponse response, HttpSession session) {
         userService.remove(id);
         response.setStatus(HttpStatus.NO_CONTENT.value());
@@ -112,8 +109,7 @@ public class User {
     @GetMapping("/user")
     @ResponseBody
     Map<String, ?> get(@RequestParam(defaultValue = "0") int beginIndex, @RequestParam(defaultValue = "50") int count, @RequestParam(defaultValue = "teacherNo") String orderBy, @RequestParam(defaultValue = "true") boolean asc, HttpServletResponse response) {
-        UserService.Order order;
-        order = Arrays.stream(UserService.Order.values()).filter(i -> i.value().equals(orderBy)).findFirst().get();
+        UserService.Order order = Arrays.stream(UserService.Order.values()).filter(i -> i.value().equals(orderBy)).findFirst().get();
         if (beginIndex < 0 || count <= 0)
             throw new NoSuchElementException();
         List<Teacher> list = userService.find(order, beginIndex, count, asc);
@@ -123,8 +119,6 @@ public class User {
         list.forEach(user -> {
             user.setSuperviseRecords(null);
             user.setTasks(null);
-            user.setUpdateTime(null);
-            user.setInsertTime(null);
         });
         return Collections.singletonMap("users", list);
     }

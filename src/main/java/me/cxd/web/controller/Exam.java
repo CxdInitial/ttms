@@ -1,6 +1,7 @@
 package me.cxd.web.controller;
 
 import me.cxd.bean.Examination;
+import me.cxd.bean.Teacher;
 import me.cxd.service.ExamService;
 import me.cxd.web.authentic.RequiredLevel;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -10,9 +11,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 @CrossOrigin(origins = "http://127.0.0.1:8010")
@@ -24,11 +27,17 @@ public class Exam {
         this.examService = examService;
     }
 
-    @GetMapping("/count/examination")
+    @GetMapping("/classroom")
     @ResponseBody
-    Map<String, ?> count(HttpServletResponse response) {
+    Map<String, ?> getClassrooms(
+            @RequestParam(defaultValue = "0") int beginIndex
+            , @RequestParam(defaultValue = "50") int count
+            , HttpServletResponse response) {
+        List<Map<String, String>> list = examService.findClassrooms(beginIndex, count);
+        if (list.isEmpty())
+            throw new NoSuchElementException();
         response.setStatus(HttpStatus.OK.value());
-        return Collections.singletonMap("count", examService.count());
+        return Collections.singletonMap("classrooms", list);
     }
 
     @GetMapping("/examination/{id}")
@@ -37,6 +46,7 @@ public class Exam {
         Examination examination = examService.find(id);
         if (examination != null) {
             response.setStatus(HttpStatus.OK.value());
+            examination.setSuperviseRecords(null);
             return Map.of("examination", examination);
         }
         throw new NoSuchElementException();
@@ -45,34 +55,57 @@ public class Exam {
     @GetMapping("/examination")
     @ResponseBody
     Map<String, ?> get(
-            @RequestParam(required = false) Long number
+            @RequestParam(required = false) @Min(value = 1000000000L) Long number
             , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate beg
             , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
-            , @RequestParam(required = false) Long classroomId
-            , @RequestParam(required = false) Short begNo
-            , @RequestParam(required = false) Short endNo
-            , @RequestParam(defaultValue = "0") long begIndex
-            , @RequestParam(defaultValue = "50") long count
+            , @RequestParam(required = false) @Pattern(regexp = "^((丹青)|(成栋)|(锦绣))楼$") String area
+            , @RequestParam(required = false) @Pattern(regexp = "^([1-9]|(1[0-4]))((0[1-9])|(1[0-9])|(2[0-9])|3[0-6])$") String classroomNo
+            , @RequestParam(required = false) @Min(1) @Max(12) Short begNo
+            , @RequestParam(required = false) @Min(1) @Max(12) Short endNo
+            , @RequestParam(defaultValue = "0") int begIndex
+            , @RequestParam(defaultValue = "50") int count
             , HttpServletResponse response
     ) {
-        if (Optional.of(end).orElse(LocalDate.MAX).compareTo(Optional.of(beg).orElse(LocalDate.EPOCH)) < 0 || endNo < begNo || begNo < 1 || endNo > 11 || (number != null && (number <= 1000000000L || number >= 9999999999L)))
+        if ((end == null ? LocalDate.MAX : end).compareTo(beg == null ? LocalDate.MIN : beg) < 0 || (endNo == null ? Short.MAX_VALUE : endNo) < (begNo == null ? Short.MIN_VALUE : begNo))
             throw new NoSuchElementException();
         response.setStatus(HttpStatus.OK.value());
-        return Collections.singletonMap("examinations", examService.find(begIndex, count, number, classroomId, beg, end, begNo, endNo));
+        List<Examination> list = examService.find(begIndex, count, number, area, classroomNo, beg, end, begNo, endNo);
+        if (list.isEmpty())
+            throw new NoSuchElementException();
+        list.forEach(examination -> examination.setSuperviseRecords(null));
+        return Collections.singletonMap("examinations", list);
+    }
+
+    @GetMapping("/count/examination")
+    @ResponseBody
+    Map<String, ?> count(
+            @RequestParam(required = false) @Min(value = 1000000000L) Long teacherNo
+            , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate beg
+            , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+            , @RequestParam(required = false) @Pattern(regexp = "^((丹青)|(成栋)|(锦绣))楼$") String area
+            , @RequestParam(required = false) @Pattern(regexp = "^([1-9]|(1[0-4]))((0[1-9])|(1[0-9])|(2[0-9])|3[0-6])$") String classroomNo
+            , @RequestParam(required = false) @Min(1) @Max(11) Short begNo
+            , @RequestParam(required = false) @Min(1) @Max(11) Short endNo
+            , HttpServletResponse response) {
+        response.setStatus(HttpStatus.OK.value());
+        if ((end == null ? LocalDate.MAX : end).compareTo(beg == null ? LocalDate.MIN : beg) < 0 || (endNo == null ? Short.MAX_VALUE : endNo) < (begNo == null ? Short.MIN_VALUE : begNo))
+            return Collections.singletonMap("count", 0);
+        return Collections.singletonMap("count", examService.count(teacherNo, area, classroomNo, beg, end, begNo, endNo));
     }
 
     @PostMapping("/examination")
     @RequiredLevel(RequiredLevel.Level.ADMIN)
     @ResponseBody
-    Map<String, Long> add(@Validated Examination examination, @RequestParam long classroomId, HttpServletResponse response) {
+    Map<String, Long> add(@Validated Examination examination, HttpServletResponse response) {
         response.setStatus(HttpStatus.CREATED.value());
-        return Collections.singletonMap("id", examService.add(examination, classroomId));
+        examService.add(examination);
+        return Collections.singletonMap("id", examination.getId());
     }
 
     @PutMapping("/examination/{id}")
     @RequiredLevel(RequiredLevel.Level.ADMIN)
-    void modify(@PathVariable long id, @Validated Examination examination, @RequestParam long classroomId, HttpServletResponse response) {
-        examService.modify(id, examination, classroomId);
+    void modify(@PathVariable long id, @Validated Examination examination, HttpServletResponse response) {
+        examService.modify(id, examination);
         response.setStatus(HttpStatus.CREATED.value());
     }
 
@@ -83,17 +116,26 @@ public class Exam {
         response.setStatus(HttpStatus.NO_CONTENT.value());
     }
 
-    @PatchMapping(value = "/examination/{id}", params = {"add"})
+    @PostMapping(value = "/supervisor")
     @RequiredLevel(RequiredLevel.Level.ADMIN)
-    void addSupervisor(@PathVariable long id, @RequestParam("supervisor") long number, HttpServletResponse response) {
-        examService.addSupervisor(id, number);
+    void addSupervisor(@RequestParam long examId, @RequestParam long teacherId, HttpServletResponse response) {
+        examService.addSupervisor(examId, teacherId);
         response.setStatus(HttpStatus.CREATED.value());
     }
 
-    @PatchMapping(value = "/examination/{id}", params = {"remove"})
+    @DeleteMapping(value = "/supervisor")
     @RequiredLevel(RequiredLevel.Level.ADMIN)
-    void removeSupervisor(@PathVariable long id, @RequestParam("supervisor") long number, HttpServletResponse response) {
-        examService.removeSupervisor(id, number);
+    void removeSupervisor(@PathVariable long examId, @RequestParam long teacherId, HttpServletResponse response) {
+        examService.removeSupervisor(examId, teacherId);
         response.setStatus(HttpStatus.CREATED.value());
+    }
+
+    @GetMapping("/supervisor")
+    @ResponseBody
+    Map<String, ?> getSupervisors(@RequestParam long examId) {
+        List<Teacher> teachers = examService.findSupervisors(examId);
+        if (teachers.isEmpty())
+            throw new NoSuchElementException();
+        return Collections.singletonMap("supervisors", teachers);
     }
 }

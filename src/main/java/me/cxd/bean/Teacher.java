@@ -13,6 +13,7 @@ public class Teacher {
 
     @Min(value = 1000000000L)
     @NotNull
+    @Column(nullable = false, unique = true)
     private long teacherNo;
 
     @Pattern(regexp = "^[\\u2E80-\\u9FFF]{2,5}$")

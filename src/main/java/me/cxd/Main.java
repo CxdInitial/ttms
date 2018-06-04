@@ -1,6 +1,5 @@
 package me.cxd;
 
-import me.cxd.bean.Classroom;
 import me.cxd.bean.Examination;
 import me.cxd.bean.SuperviseRecord;
 import me.cxd.bean.Teacher;
@@ -27,11 +26,6 @@ public class Main {
     @Bean
     JpaDao<SuperviseRecord> superviseDao() {
         return new JpaDaoImpl<>(SuperviseRecord.class);
-    }
-
-    @Bean
-    JpaDao<Classroom> classroomDao() {
-        return new JpaDaoImpl<>(Classroom.class);
     }
 
     public static void main(String[] args) {
