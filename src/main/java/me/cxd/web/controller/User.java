@@ -9,17 +9,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
-import javax.validation.constraints.Null;
-import java.lang.reflect.Field;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "http://127.0.0.1:8010")
 @Controller
@@ -28,32 +27,26 @@ import java.util.stream.Collectors;
 public class User {
     private final LoginValidator jwcLoginValidator;
     private final UserService userService;
-    private final FieldList<Teacher> userFieldNameList;
 
     @Autowired
     public User(@Qualifier("additionalLoginValidator") LoginValidator loginValidator, UserService userService, FieldList<Teacher> userFieldNameList) {
         this.jwcLoginValidator = loginValidator;
         this.userService = userService;
-        this.userFieldNameList = userFieldNameList;
     }
 
     @RequiredLevel(RequiredLevel.Level.NOBODY)
     @PostMapping("/authentication")
-    void login(@Validated Teacher user, BindingResult bindingResult, HttpSession session, HttpServletResponse response) {
-        if (bindingResult.hasFieldErrors("teacherNo") || bindingResult.hasFieldErrors("loginPassword")) {
-            response.setStatus(HttpStatus.BAD_REQUEST.value()); //校验错误
-            return;
-        }
-        if (userService.isValidUser(user.getTeacherNo(), user.getLoginPassword()))
+    void login(@RequestParam @Min(value = 1000000000L) long teacherNo, @RequestParam @Pattern(regexp = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$") String loginPassword, HttpSession session, HttpServletResponse response) {
+        if (userService.isValidUser(teacherNo, loginPassword))
             response.setStatus(HttpStatus.CREATED.value()); //成功
-        else if (jwcLoginValidator.isValidUser(user.getTeacherNo(), user.getLoginPassword())) {
+        else if (jwcLoginValidator.isValidUser(teacherNo, loginPassword)) {
             response.setStatus(HttpStatus.NOT_FOUND.value()); //未注册
-            if (userService.findByNo(user.getTeacherNo()) != null)
+            if (userService.findByNo(teacherNo) != null)
                 response.setStatus(HttpStatus.CREATED.value()); //成功
         } else
             response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value()); //密码错误
         if (response.getStatus() == HttpStatus.CREATED.value())
-            session.setAttribute("user", userService.findByNo(user.getTeacherNo()).getId());
+            session.setAttribute("user", userService.findByNo(teacherNo).getId());
     }
 
     @RequiredLevel(RequiredLevel.Level.TEACHER)
@@ -69,18 +62,43 @@ public class User {
         response.setStatus(HttpStatus.CREATED.value()); //注册成功
     }
 
-    @SelfOrAdmin
+    @Self
     @PatchMapping("/user/{id}")
-    void update(@PathVariable long id, @Validated Teacher teacher, BindingResult result, HttpSession session, HttpServletResponse response, @RequestParam Map<String, String> map) {
-        Set<String> fields = userFieldNameList.getFields().stream().filter(f -> f.getAnnotation(Null.class) == null).map(Field::getName).collect(Collectors.toSet());
-        if (!map.entrySet().stream().allMatch(pair -> fields.contains(pair.getKey()) && !result.hasFieldErrors(pair.getKey())) || map.isEmpty()) {
-            response.setStatus(HttpStatus.BAD_REQUEST.value()); //数据错误
-            return;
-        }
-        if (map.containsKey("loginPassword") || map.containsKey("teacherNo"))
+    void update(@PathVariable long id
+            , @RequestParam(required = false) @Pattern(regexp = "^[\\u2E80-\\u9FFF]{2,5}$") String teacherName
+            , @RequestParam(required = false) @Pattern(regexp = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$") String loginPassword
+            , @RequestParam(required = false) Boolean male
+            , @RequestParam(required = false) @Pattern(regexp = "^((13[0-9])|(147,145)|(15(0,1,2,3,5,6,7,8,9))|(166)|(17[6-8])|(18[0-9])|(19[8-9]))[0-9]{8}$") String phone
+            , @RequestParam(required = false) String intro
+            , HttpSession session, HttpServletResponse response) {
+        Map<String, Object> fields = new HashMap<>(5);
+        if (teacherName != null)
+            fields.put("teacherName", teacherName);
+        if (loginPassword != null) {
+            fields.put("loginPassword", loginPassword);
             session.removeAttribute("user");
-        userService.update(id, map);
+        }
+        if (male != null)
+            fields.put("male", male);
+        if (phone != null)
+            fields.put("phone", phone);
+        if (intro != null) {
+            if (intro.trim().isEmpty())
+                throw new ConstraintViolationException(null);
+            fields.put("intro", intro);
+        }
+        if (fields.isEmpty())
+            throw new ConstraintViolationException(null);
+        userService.update(id, fields);
         response.setStatus(HttpStatus.CREATED.value()); //更新成功
+    }
+
+    @RequiredLevel(RequiredLevel.Level.ADMIN)
+    @PutMapping("/user/{id}")
+    void update(@PathVariable long id, @Validated Teacher teacher, HttpSession session, HttpServletResponse response) {
+        userService.update(id, teacher);
+        session.removeAttribute("user");
+        response.setStatus(HttpStatus.CREATED.value());
     }
 
     @DeleteMapping("/user/{id}")
@@ -93,10 +111,11 @@ public class User {
     @GetMapping("/user/{id}")
     @RequiredLevel(RequiredLevel.Level.TEACHER)
     @ResponseBody
-    Map<String, ?> get(@PathVariable long id, HttpServletResponse response) {
+    Map<String, Teacher> get(@PathVariable long id, HttpServletResponse response) {
         Teacher user = userService.find(id);
         user.setSuperviseRecords(null);
         user.setTasks(null);
+        user.setLoginPassword(null);
         user.setUpdateTime(null);
         user.setInsertTime(null);
         if (user != null) {
@@ -108,24 +127,25 @@ public class User {
 
     @GetMapping("/user")
     @ResponseBody
-    Map<String, ?> get(@RequestParam(defaultValue = "0") int beginIndex, @RequestParam(defaultValue = "50") int count, @RequestParam(defaultValue = "teacherNo") String orderBy, @RequestParam(defaultValue = "true") boolean asc, HttpServletResponse response) {
+    Map<String, List<Teacher>> get(@RequestParam(defaultValue = "0") @Min(0) int begIndex, @RequestParam(defaultValue = "50") @Min(0) int count, @RequestParam(defaultValue = "teacherNo") String orderBy, @RequestParam(defaultValue = "true") boolean asc, HttpServletResponse response) {
         UserService.Order order = Arrays.stream(UserService.Order.values()).filter(i -> i.value().equals(orderBy)).findFirst().get();
-        if (beginIndex < 0 || count <= 0)
+        if (begIndex < 0 || count <= 0)
             throw new NoSuchElementException();
-        List<Teacher> list = userService.find(order, beginIndex, count, asc);
+        List<Teacher> list = userService.find(order, begIndex, count, asc);
         if (list.isEmpty())
             throw new NoSuchElementException();
         response.setStatus(HttpStatus.OK.value());
         list.forEach(user -> {
             user.setSuperviseRecords(null);
             user.setTasks(null);
+            user.setLoginPassword(null);
         });
         return Collections.singletonMap("users", list);
     }
 
     @GetMapping("/count/user")
     @ResponseBody
-    Map<String, ?> count(HttpServletResponse response) {
+    Map<String, Long> count(HttpServletResponse response) {
         response.setStatus(HttpStatus.OK.value());
         return Map.of("count", userService.countUser());
     }

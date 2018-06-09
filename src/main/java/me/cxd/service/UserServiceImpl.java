@@ -12,6 +12,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.criteria.Root;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -35,20 +36,41 @@ public class UserServiceImpl implements UserService {
         try {
             userDao.create(teacher);
         } catch (PersistenceException e) {
-            e.printStackTrace();
             throw new IllegalArgumentException("Some errors happened", e);
         }
     }
 
     @Override
-    public void update(long id, Map<String, String> fieldValues) throws NoSuchElementException, IllegalArgumentException {
+    public void update(long id, Map<String, Object> fieldValues) throws NoSuchElementException, IllegalArgumentException {
         if (find(id) == null)
             throw new NoSuchElementException("Found no user with id: " + id);
-        try {
-            userDao.update(id, fieldValues);
-        } catch (PersistenceException e) {
-            throw new IllegalArgumentException("Some errors happened.", e);
-        }
+        CriteriaBuilder builder = userDao.getEntityManager().getCriteriaBuilder();
+        CriteriaUpdate<Teacher> update = builder.createCriteriaUpdate(Teacher.class);
+        Root<Teacher> root = update.from(Teacher.class);
+        fieldValues.forEach(update::set);
+        update.where(builder.equal(root.get("id"), id));
+        if (userDao.getEntityManager().createQuery(update).executeUpdate() != 1)
+            throw new IllegalArgumentException("Some errors happened.");
+    }
+
+    @Override
+    public void update(long id, Teacher teacher) throws NoSuchElementException, IllegalArgumentException {
+        Teacher user = userDao.read(id);
+        if (user == null)
+            throw new NoSuchElementException("Found no user with id: " + id);
+        CriteriaBuilder builder = userDao.getEntityManager().getCriteriaBuilder();
+        CriteriaUpdate<Teacher> update = builder.createCriteriaUpdate(Teacher.class);
+        Root<Teacher> root = update.from(Teacher.class);
+        update.set("teacherNo", teacher.getTeacherNo());
+        update.set("loginPassword", teacher.getLoginPassword());
+        update.set("title", teacher.getTitle());
+        update.set("intro", teacher.getIntro());
+        update.set("phone", teacher.getPhone());
+        update.set("male", teacher.getMale());
+        update.set("manager", teacher.getManager());
+        update.where(builder.equal(root.get("id"), id));
+        if (userDao.getEntityManager().createQuery(update).executeUpdate() != 1)
+            throw new IllegalArgumentException("Some errors happened.");
     }
 
     @Override
@@ -97,15 +119,18 @@ public class UserServiceImpl implements UserService {
         }
         List<BigInteger> ids;
         if (asc)
-            ids = superviseDao.getEntityManager().createNativeQuery("select userId from (select t.id as userId,count(s.id) as c from teacher as t left join superviserecord as s on t.id=s.supervisor_id group by t.id order by c asc) temp").getResultList();
+            ids = superviseDao.getEntityManager().createNativeQuery("select userId from (select t.id as userId,count(s.id) as sc from teacher as t left join superviserecord as s on t.id=s.supervisor_id group by t.id order by sc asc) temp").getResultList();
         else
-            ids = superviseDao.getEntityManager().createNativeQuery("select userId from (select t.id as userId,count(s.id) as c from teacher as t left join superviserecord as s on t.id=s.supervisor_id group by t.id order by c desc) temp").getResultList();
+            ids = superviseDao.getEntityManager().createNativeQuery("select userId from (select t.id as userId,count(s.id) as sc from teacher as t left join superviserecord as s on t.id=s.supervisor_id group by t.id order by sc desc) temp").getResultList();
         return ids.stream().map(BigInteger::longValue).map(userDao::read).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public long countUser() {
-        return userDao.getEntityManager().createQuery("select count(t.id) from Teacher t", Long.class).getSingleResult();
+        CriteriaBuilder builder = userDao.getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<Long> query = builder.createQuery(Long.class);
+        query.select(builder.count(query.from(Teacher.class).get("id")));
+        return userDao.getEntityManager().createQuery(query).getSingleResult();
     }
 }

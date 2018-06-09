@@ -1,7 +1,5 @@
 package me.cxd.util;
 
-import org.springframework.stereotype.Component;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -14,7 +12,7 @@ import java.util.stream.Collectors;
 public abstract class FieldList<T> {
     private final Class<T> clz;
 
-    FieldList() {
+    public FieldList() {
         clz = ((Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
     }
 

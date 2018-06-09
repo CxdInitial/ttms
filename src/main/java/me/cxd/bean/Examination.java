@@ -28,7 +28,7 @@ public class Examination {
     @Max(12)
     @NotNull
     @Column(nullable = false)
-    private short beginNo;
+    private short begNo;
 
     @Min(1)
     @Max(12)
@@ -38,11 +38,11 @@ public class Examination {
 
     @AssertTrue
     public boolean validateTime() {
-        if (endNo < beginNo)
+        if (endNo < begNo)
             return false;
-        if (beginNo <= 4)
+        if (begNo <= 4)
             return endNo <= 4;
-        if (beginNo <= 8)
+        if (begNo <= 8)
             return endNo >= 5 && endNo <= 8;
         return endNo >= 9;
     }
@@ -77,12 +77,12 @@ public class Examination {
         this.course = course;
     }
 
-    public short getBeginNo() {
-        return beginNo;
+    public short getBegNo() {
+        return begNo;
     }
 
-    public void setBeginNo(short begin) {
-        this.beginNo = begin;
+    public void setBegNo(short begin) {
+        this.begNo = begin;
     }
 
     public short getEndNo() {

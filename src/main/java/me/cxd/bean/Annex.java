@@ -1,8 +1,6 @@
 package me.cxd.bean;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 public class Annex {
@@ -12,12 +10,13 @@ public class Annex {
     @Column(nullable = false)
     private String path;
 
-    @Column(nullable = false)
-    private String fileName;
+    private String checkSum;
 
-    private String hashcode;
+    @ManyToOne
+    private AnnexType fileType;
 
-    private String fileType;
+    @OneToOne
+    private Reply reply;
 
     public String getPath() {
         return path;
@@ -27,28 +26,12 @@ public class Annex {
         this.path = path;
     }
 
-    public String getFileName() {
-        return fileName;
+    public String getCheckSum() {
+        return checkSum;
     }
 
-    public void setFileName(String name) {
-        this.fileName = name;
-    }
-
-    public String getHashcode() {
-        return hashcode;
-    }
-
-    public void setHashcode(String hashcode) {
-        this.hashcode = hashcode;
-    }
-
-    public String getFileType() {
-        return fileType;
-    }
-
-    public void setFileType(String type) {
-        this.fileType = type;
+    public void setCheckSum(String hashcode) {
+        this.checkSum = hashcode;
     }
 
     public long getId() {
@@ -57,5 +40,21 @@ public class Annex {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public AnnexType getFileType() {
+        return fileType;
+    }
+
+    public void setFileType(AnnexType fileType) {
+        this.fileType = fileType;
+    }
+
+    public Reply getReply() {
+        return reply;
+    }
+
+    public void setReply(Reply reply) {
+        this.reply = reply;
     }
 }

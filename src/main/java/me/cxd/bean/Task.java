@@ -1,9 +1,9 @@
 package me.cxd.bean;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.*;
-import javax.validation.constraints.Future;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Null;
+import javax.validation.constraints.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,25 +22,33 @@ public class Task {
     private String content;
 
     @Future
+    @NotNull
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime deadline;
 
-    @Column(columnDefinition = "bit(1) not null default 1")
+    @NotNull
+    @Column(nullable = false)
     private boolean permitDelay;
 
-    @ManyToOne(optional = false)
-    @NotBlank
-    private AnnexType requiredAnnexType;
+    @Pattern(regexp = "^[0-9a-z]{1,12}$")
+    private String requiredAnnexType;
 
-    @Column(columnDefinition = "bit(1) null default 1")
-    private boolean strictMode;
+    @Column
+    private Boolean strictMode;
+
+    @Column
+    private Boolean passToFill;
 
     @Null
-    @OneToMany
-    private List<Annex> annexes;
+    @OneToOne
+    private Annex annex;
 
     @ManyToOne(optional = false)
     @Null
     private Teacher submitter;
+
+    @OneToMany(mappedBy = "task")
+    private List<Reply> replies;
 
     @Null
     @Column(insertable = false, updatable = false, columnDefinition = "timestamp null default current_timestamp")
@@ -90,14 +98,6 @@ public class Task {
         this.permitDelay = permitDelay;
     }
 
-    public List<Annex> getAnnexes() {
-        return annexes;
-    }
-
-    public void setAnnexes(List<Annex> annexes) {
-        this.annexes = annexes;
-    }
-
     public Teacher getSubmitter() {
         return submitter;
     }
@@ -106,19 +106,19 @@ public class Task {
         this.submitter = submitter;
     }
 
-    public AnnexType getRequiredAnnexType() {
+    public String getRequiredAnnexType() {
         return requiredAnnexType;
     }
 
-    public void setRequiredAnnexType(AnnexType requiredFileAnnexType) {
-        this.requiredAnnexType = requiredFileAnnexType;
+    public void setRequiredAnnexType(String requiredAnnexType) {
+        this.requiredAnnexType = requiredAnnexType;
     }
 
-    public boolean isStrictMode() {
+    public Boolean getStrictMode() {
         return strictMode;
     }
 
-    public void setStrictMode(boolean strictFileType) {
+    public void setStrictMode(Boolean strictFileType) {
         this.strictMode = strictFileType;
     }
 
@@ -136,5 +136,29 @@ public class Task {
 
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public List<Reply> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<Reply> replies) {
+        this.replies = replies;
+    }
+
+    public Annex getAnnex() {
+        return annex;
+    }
+
+    public void setAnnex(Annex annex) {
+        this.annex = annex;
+    }
+
+    public Boolean getPassToFill() {
+        return passToFill;
+    }
+
+    public void setPassToFill(Boolean passToFill) {
+        this.passToFill = passToFill;
     }
 }

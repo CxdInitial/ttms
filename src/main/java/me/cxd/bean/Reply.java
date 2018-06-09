@@ -8,15 +8,12 @@ import java.time.LocalDateTime;
 @Entity
 public class Reply {
     @Id
-    @Null
     private long id;
 
-    @OneToOne(optional = false)
-    @Null
+    @ManyToOne(optional = false)
     private Teacher replier;
 
-    @OneToOne(optional = false)
-    @Null
+    @ManyToOne(optional = false)
     private Task task;
 
     @Lob

@@ -108,13 +108,4 @@ public interface ExamService {
      * @return a list of supervisor
      */
     List<Teacher> findSupervisors(long id);
-
-    /**
-     * Find all classrooms' area(building) and number, which would be sorted by area firstly and number secondly.
-     *
-     * @param beginIndex: from first {@param beginIndex}-th(inclusive)
-     * @param count:      the count of retrieve classrooms
-     * @return list of two-entry map, int which there are keys consist of "area" and "classroomNo"
-     */
-    List<Map<String, String>> findClassrooms(int beginIndex, int count);
 }

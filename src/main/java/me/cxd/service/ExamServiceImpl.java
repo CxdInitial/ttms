@@ -4,7 +4,6 @@ import me.cxd.bean.Examination;
 import me.cxd.bean.SuperviseRecord;
 import me.cxd.bean.Teacher;
 import me.cxd.dao.JpaDao;
-import me.cxd.web.controller.Exam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -56,7 +55,7 @@ public class ExamServiceImpl implements ExamService {
             if (end != null)
                 predicates.add(builder.lessThanOrEqualTo(root.get("examDate"), end));
             if (begNo != null)
-                predicates.add(builder.ge(root.get("beginNo"), begNo == null ? 1 : begNo));
+                predicates.add(builder.ge(root.get("begNo"), begNo == null ? 1 : begNo));
             if (endNo != null)
                 predicates.add(builder.le(root.get("endNo"), endNo == null ? 12 : endNo));
             query.select(builder.count(root.get("id"))).where(predicates.toArray(new Predicate[0]));
@@ -74,7 +73,7 @@ public class ExamServiceImpl implements ExamService {
         if (end != null)
             predicates.add(builder.lessThanOrEqualTo(root.get("examDate"), end));
         if (begNo != null)
-            predicates.add(builder.ge(root.get("examination").get("beginNo"), begNo == null ? 1 : begNo));
+            predicates.add(builder.ge(root.get("examination").get("begNo"), begNo == null ? 1 : begNo));
         if (endNo != null)
             predicates.add(builder.le(root.get("examination").get("endNo"), endNo == null ? 12 : endNo));
         query.select(builder.count(root.get("examination").get("id"))).distinct(true).where(predicates.toArray(new Predicate[0]));
@@ -99,7 +98,7 @@ public class ExamServiceImpl implements ExamService {
             if (end != null)
                 predicates.add(builder.lessThanOrEqualTo(root.get("examDate"), end));
             if (begNo != null)
-                predicates.add(builder.ge(root.get("beginNo"), begNo == null ? 1 : begNo));
+                predicates.add(builder.ge(root.get("begNo"), begNo == null ? 1 : begNo));
             if (endNo != null)
                 predicates.add(builder.le(root.get("endNo"), endNo == null ? 12 : endNo));
             query.select(root).where(predicates.toArray(new Predicate[0]));
@@ -117,7 +116,7 @@ public class ExamServiceImpl implements ExamService {
         if (end != null)
             predicates.add(builder.lessThanOrEqualTo(root.get("examDate"), end));
         if (begNo != null)
-            predicates.add(builder.ge(root.get("examination").get("beginNo"), begNo == null ? 1 : begNo));
+            predicates.add(builder.ge(root.get("examination").get("begNo"), begNo == null ? 1 : begNo));
         if (endNo != null)
             predicates.add(builder.le(root.get("examination").get("endNo"), endNo == null ? 12 : endNo));
         query.select(root.get("examination")).distinct(true).where(predicates.toArray(new Predicate[0]));
@@ -133,7 +132,7 @@ public class ExamServiceImpl implements ExamService {
         query.where(builder.equal(root.get("examDate"), examination.getExamDate())
                 , builder.equal(root.get("area"), examination.getArea())
                 , builder.equal(root.get("classroomNo"), examination.getClassroomNo())
-                , builder.between(root.get("beginNo"), examination.getBeginNo(), examination.getEndNo()));
+                , builder.between(root.get("begNo"), examination.getBegNo(), examination.getEndNo()));
         if (examDao.getEntityManager().createQuery(query).getSingleResult() != 0)
             throw new IllegalArgumentException("There is conflict in examination arrange.");
         try {
@@ -150,7 +149,7 @@ public class ExamServiceImpl implements ExamService {
         Root<Examination> root = update.from(Examination.class);
         update.where(builder.equal(root.get("id"), id));
         update.set("examDate", examination.getExamDate());
-        update.set("beginNo", examination.getBeginNo());
+        update.set("begNo", examination.getBegNo());
         update.set("endNo", examination.getEndNo());
         update.set("course", examination.getCourse());
         update.set("area", examination.getArea());
@@ -183,22 +182,12 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public List<Teacher> findSupervisors(long id) {
         Examination examination = find(id);
         if (examination == null)
             throw new NoSuchElementException("Found no exam with the ID: " + id);
         return examination.getSuperviseRecords().stream().map(SuperviseRecord::getSupervisor).collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public List<Map<String, String>> findClassrooms(int beginIndex, int count) {
-        CriteriaBuilder builder = examDao.getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<Tuple> query = builder.createQuery(Tuple.class);
-        query.distinct(true);
-        Root<Examination> root = query.from(Examination.class);
-        query.multiselect(root.<String>get("area"), root.<String>get("classroomNo"));
-        return userDao.getEntityManager().createQuery(query).setFirstResult(beginIndex).setMaxResults(count).getResultList().stream().map(tuple -> Map.of("area", String.valueOf(tuple.get(0)), "classroomNo", String.valueOf(tuple.get(1)))).collect(Collectors.toList());
     }
 
     @Override

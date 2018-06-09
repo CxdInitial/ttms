@@ -55,6 +55,10 @@ public class Teacher {
     @Null
     private List<Task> tasks;
 
+    @OneToMany(mappedBy = "user")
+    @Null
+    private List<DownloadRecord> records;
+
     @Null
     @Column(insertable = false, updatable = false, columnDefinition = "timestamp default current_timestamp")
     private LocalDateTime insertTime;
@@ -165,5 +169,13 @@ public class Teacher {
 
     public void setTasks(List<Task> tasks) {
         this.tasks = tasks;
+    }
+
+    public List<DownloadRecord> getRecords() {
+        return records;
+    }
+
+    public void setRecords(List<DownloadRecord> records) {
+        this.records = records;
     }
 }

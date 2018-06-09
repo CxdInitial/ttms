@@ -1,8 +1,6 @@
 package me.cxd;
 
-import me.cxd.bean.Examination;
-import me.cxd.bean.SuperviseRecord;
-import me.cxd.bean.Teacher;
+import me.cxd.bean.*;
 import me.cxd.dao.JpaDao;
 import me.cxd.dao.JpaDaoImpl;
 import org.springframework.boot.SpringApplication;
@@ -26,6 +24,31 @@ public class Main {
     @Bean
     JpaDao<SuperviseRecord> superviseDao() {
         return new JpaDaoImpl<>(SuperviseRecord.class);
+    }
+
+    @Bean
+    JpaDao<Task> taskDao() {
+        return new JpaDaoImpl<>(Task.class);
+    }
+
+    @Bean
+    JpaDao<Reply> replyDao() {
+        return new JpaDaoImpl<>(Reply.class);
+    }
+
+    @Bean
+    JpaDao<Annex> annexDao() {
+        return new JpaDaoImpl<>(Annex.class);
+    }
+
+    @Bean
+    JpaDao<AnnexType> annexTypeDao() {
+        return new JpaDaoImpl<>(AnnexType.class);
+    }
+
+    @Bean
+    JpaDao<DownloadRecord> annexRecordDao() {
+        return new JpaDaoImpl<>(DownloadRecord.class);
     }
 
     public static void main(String[] args) {

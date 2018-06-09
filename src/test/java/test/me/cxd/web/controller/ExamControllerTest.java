@@ -1,6 +1,5 @@
 package test.me.cxd.web.controller;
 
-import com.google.gson.Gson;
 import me.cxd.bean.Examination;
 import me.cxd.bean.Teacher;
 import me.cxd.service.ExamService;
@@ -76,7 +75,7 @@ class ExamControllerTest {
         examination.setClassroomNo("110");
         examination.setExamDate(LocalDate.of(2018, 6, 6));
         examination.setCourse("软件项目管理");
-        examination.setBeginNo((short) 7);
+        examination.setBegNo((short) 7);
         examination.setEndNo((short) 8);
         examService.add(examination);
         examination = new Examination();
@@ -84,7 +83,7 @@ class ExamControllerTest {
         examination.setClassroomNo("320");
         examination.setExamDate(LocalDate.of(2018, 6, 9));
         examination.setCourse("软件质量保证与测试");
-        examination.setBeginNo((short) 3);
+        examination.setBegNo((short) 3);
         examination.setEndNo((short) 4);
         examService.add(examination);
     }
@@ -110,7 +109,7 @@ class ExamControllerTest {
                     .session(online())
                     .param("area", examination.getArea())
                     .param("classroomNo", examination.getClassroomNo())
-                    .param("beginNo", String.valueOf(examination.getBeginNo()))
+                    .param("beginNo", String.valueOf(examination.getBegNo()))
                     .param("endNo", String.valueOf(examination.getEndNo()))
                     .param("examDate", examination.getExamDate().toString())
                     .param("course", examination.getCourse())

@@ -5,11 +5,13 @@ import me.cxd.bean.Teacher;
 import javax.persistence.EntityManager;
 import javax.persistence.Id;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.criteria.Root;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -41,14 +43,22 @@ public class JpaDaoImpl<T> implements JpaDao<T> {
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaUpdate<T> criteriaUpdate = builder.createCriteriaUpdate(clz);
         criteriaUpdate.from(clz);
-        criteriaUpdate.where(builder.equal(criteriaUpdate.getRoot().get(Arrays.stream(clz.getDeclaredFields()).filter(field -> field.getAnnotation(Id.class) != null).map(Field::getName).findFirst().get()), id));
-        criteriaUpdate.set("id", id);
+        String idField = Arrays.stream(clz.getDeclaredFields()).filter(field -> field.getAnnotation(Id.class) != null).map(Field::getName).findFirst().get();
+        char[] chars = idField.toCharArray();
+        chars[0] -= 32;
+        String getter = "get" + String.valueOf(chars);
+        try {
+            criteriaUpdate.where(builder.equal(criteriaUpdate.getRoot().get(idField), clz.getMethod(getter).invoke(t)));
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            throw new PersistenceException("No getter found or getter has bad format.", e);
+        }
+        criteriaUpdate.set(idField, id);
         entityManager.createQuery(criteriaUpdate).executeUpdate();
     }
 
     @Override
     public void update(long id, Map<String, String> fields) {
-        entityManager.createQuery(String.format("update %s set %s where id=%d", clz.getSimpleName(), fields.entrySet().stream().map(field -> field.getKey() + "=" + String.valueOf(field.getValue())).reduce((a, b) -> a + "," + b).get(), id)).executeUpdate();
+        assert 1 == entityManager.createQuery(String.format("update %s set %s where id=%d", clz.getSimpleName(), fields.entrySet().stream().map(field -> field.getKey() + "=" + String.valueOf(field.getValue())).reduce((a, b) -> a + "," + b).get(), id)).executeUpdate();
     }
 
     @Override

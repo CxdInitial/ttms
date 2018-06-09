@@ -1,6 +1,7 @@
 package me.cxd.bean;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 public class AnnexType {
@@ -10,11 +11,13 @@ public class AnnexType {
     @Column(nullable = false)
     private String hex;
 
-    @Column(columnDefinition = "bit(1) null default 0")
-    private long offset;
+    private int byteOffset;
 
     @Column(nullable = false)
     private String suffix;
+
+    @OneToMany(mappedBy = "fileType")
+    private List<Annex> annexes;
 
     public int getId() {
         return id;
@@ -32,12 +35,12 @@ public class AnnexType {
         this.hex = hex;
     }
 
-    public long getOffset() {
-        return offset;
+    public int getByteOffset() {
+        return byteOffset;
     }
 
-    public void setOffset(long offset) {
-        this.offset = offset;
+    public void setByteOffset(int offset) {
+        this.byteOffset = offset;
     }
 
     public String getSuffix() {
@@ -46,5 +49,13 @@ public class AnnexType {
 
     public void setSuffix(String suffix) {
         this.suffix = suffix;
+    }
+
+    public List<Annex> getAnnexes() {
+        return annexes;
+    }
+
+    public void setAnnexes(List<Annex> annexes) {
+        this.annexes = annexes;
     }
 }

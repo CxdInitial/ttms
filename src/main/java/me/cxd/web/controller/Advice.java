@@ -13,6 +13,7 @@ import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
+import java.io.IOException;
 import java.util.NoSuchElementException;
 
 @ControllerAdvice
@@ -30,7 +31,7 @@ public class Advice {
         response.setStatus(HttpStatus.NOT_FOUND.value());
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler({IllegalArgumentException.class,IOException.class})
     void illegalParam(HttpServletResponse response) {
         response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
     }
