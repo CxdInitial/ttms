@@ -1,4 +1,4 @@
-# 以下忽略规则均来自github/gitignore项目
+﻿# 以下忽略规则均来自github/gitignore项目
 
 #---------------------------------------------------
 # Mac OS
@@ -109,3 +109,9 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+# Vue
+node_modules/
+.vscode/
+.babelrc
+Makefile
