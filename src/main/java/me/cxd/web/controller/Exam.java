@@ -18,8 +18,7 @@ import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.*;
 
-@Controller
-@CrossOrigin(origins = "http://127.0.0.1:8010")
+@RestController
 @RequiredLevel(RequiredLevel.Level.TEACHER)
 public class Exam {
     private final ExamService examService;
@@ -29,7 +28,6 @@ public class Exam {
     }
 
     @GetMapping("/examination/{id}")
-    @ResponseBody
     Map<String, Examination> get(@PathVariable long id, HttpServletResponse response) {
         Examination examination = examService.find(id);
         if (examination == null)
@@ -40,7 +38,6 @@ public class Exam {
     }
 
     @GetMapping("/examination")
-    @ResponseBody
     Map<String, List<Examination>> get(
             @RequestParam(required = false) @Min(value = 1000000000L) Long teacherNo
             , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate begDate
@@ -64,7 +61,6 @@ public class Exam {
     }
 
     @GetMapping("/count/examination")
-    @ResponseBody
     Map<String, ?> count(
             @RequestParam(required = false) @Min(value = 1000000000L) Long teacherNo
             , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate beg
@@ -82,7 +78,6 @@ public class Exam {
 
     @PostMapping("/examination")
     @RequiredLevel(RequiredLevel.Level.ADMIN)
-    @ResponseBody
     Map<String, Long> add(@Validated Examination examination, HttpServletResponse response) {
         response.setStatus(HttpStatus.CREATED.value());
         examService.add(examination);
@@ -118,7 +113,6 @@ public class Exam {
     }
 
     @GetMapping("/supervisor")
-    @ResponseBody
     Map<String, ?> getSupervisors(@RequestParam long examId) {
         List<Teacher> teachers = examService.findSupervisors(examId);
         if (teachers.isEmpty())

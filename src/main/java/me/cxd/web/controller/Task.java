@@ -26,8 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-@Controller
-@CrossOrigin(origins = "http://127.0.0.1:8010")
+@RestController
 @RequiredLevel(RequiredLevel.Level.TEACHER)
 public class Task {
     private final TaskService taskService;
@@ -38,7 +37,6 @@ public class Task {
     }
 
     @GetMapping("/annex/type")
-    @ResponseBody
     @RequiredLevel(RequiredLevel.Level.ADMIN)
     Map<String, List<String>> getFileTypes(HttpServletResponse response) {
         List<String> supportedAnnexTypes = taskService.findSupportedAnnexTypes();
@@ -55,7 +53,6 @@ public class Task {
     }
 
     @PostMapping(value = "/annex", params = "taskId")
-    @ResponseBody
     @RequiredLevel(RequiredLevel.Level.ADMIN)
     Map<String, String> upload(@RequestParam long taskId, @RequestParam("annexFile") MultipartFile file, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (file.isEmpty() || !file.getOriginalFilename().contains("."))
@@ -85,7 +82,6 @@ public class Task {
 
     @PostMapping("/task")
     @RequiredLevel(RequiredLevel.Level.ADMIN)
-    @ResponseBody
     Map<String, Long> add(@Validated me.cxd.bean.Task task, @RequestParam(value = "annexFile", required = false) MultipartFile file, HttpServletRequest request, HttpSession session, HttpServletResponse response) throws IOException {
         if (task.getAnnex() != null || task.getSubmitter() != null || task.getId() != 0 || (task.getStrictMode() != null && task.getStrictMode() && taskService.findSupportedAnnexTypes().stream().noneMatch(type -> type.equals(task.getRequiredAnnexType()))) || (task.getRequiredAnnexType() != null && task.getPassToFill() && (file == null || file.isEmpty())))
             throw new ConstraintViolationException(null);
@@ -101,7 +97,6 @@ public class Task {
     }
 
     @GetMapping("/task/{id}")
-    @ResponseBody
     Map<String, me.cxd.bean.Task> get(@PathVariable long id, HttpServletResponse response) {
         me.cxd.bean.Task task = taskService.find(id);
         if (task == null)
@@ -125,7 +120,6 @@ public class Task {
     }
 
     @GetMapping("/task")
-    @ResponseBody
     Map<String, List<me.cxd.bean.Task>> get(
             @RequestParam(defaultValue = "0") int beginIndex
             , @RequestParam(defaultValue = "50") int count
@@ -168,7 +162,6 @@ public class Task {
     }
 
     @GetMapping("/count/task")
-    @ResponseBody
     Map<String, Long> count(
             @RequestParam(required = false) Boolean requiredAnnex
             , @RequestParam(required = false) Boolean passToFill
@@ -190,7 +183,6 @@ public class Task {
     }
 
     @GetMapping("/reply")
-    @ResponseBody
     Map<String, List<Reply>> getReplies(@RequestParam long taskId, @RequestParam(defaultValue = "0") @Min(0) int begIndex, @RequestParam(defaultValue = "50") @Min(0) int count) {
         List<Reply> list = taskService.findReplies(taskId, begIndex, count);
         if (list.isEmpty())
@@ -210,7 +202,6 @@ public class Task {
     }
 
     @PostMapping("/reply")
-    @ResponseBody
     Map<String, Long> addReply(@RequestParam(value = "annexFile", required = false) MultipartFile file, @Validated Reply reply, @RequestParam long taskId, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (reply.getId() != 0 || reply.getTask() != null)
             throw new ConstraintViolationException(null);

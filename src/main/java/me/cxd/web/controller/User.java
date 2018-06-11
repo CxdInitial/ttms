@@ -20,8 +20,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 import java.util.*;
 
-@CrossOrigin(origins = "http://127.0.0.1:8010")
-@Controller
+@RestController
 @Validated
 @RequiredLevel(RequiredLevel.Level.ADMIN)
 public class User {
@@ -36,7 +35,7 @@ public class User {
 
     @RequiredLevel(RequiredLevel.Level.NOBODY)
     @PostMapping("/authentication")
-    void login(@RequestParam @Min(value = 1000000000L) long teacherNo, @RequestParam @Pattern(regexp = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$") String loginPassword, HttpSession session, HttpServletResponse response) {
+    Map<String, Long> login(@RequestParam @Min(value = 1000000000L) long teacherNo, @RequestParam @Pattern(regexp = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$") String loginPassword, HttpSession session, HttpServletResponse response) {
         if (userService.isValidUser(teacherNo, loginPassword))
             response.setStatus(HttpStatus.CREATED.value()); //成功
         else if (jwcLoginValidator.isValidUser(teacherNo, loginPassword)) {
@@ -45,8 +44,12 @@ public class User {
                 response.setStatus(HttpStatus.CREATED.value()); //成功
         } else
             response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value()); //密码错误
-        if (response.getStatus() == HttpStatus.CREATED.value())
-            session.setAttribute("user", userService.findByNo(teacherNo).getId());
+        if (response.getStatus() == HttpStatus.CREATED.value()) {
+            long id = userService.findByNo(teacherNo).getId();
+            session.setAttribute("user", id);
+            return Map.of("id", id);
+        }
+        return null;
     }
 
     @RequiredLevel(RequiredLevel.Level.TEACHER)
@@ -112,7 +115,6 @@ public class User {
 
     @GetMapping("/user/{id}")
     @RequiredLevel(RequiredLevel.Level.TEACHER)
-    @ResponseBody
     Map<String, Teacher> get(@PathVariable long id, HttpServletResponse response) {
         Teacher user = userService.find(id);
         user.setSuperviseRecords(null);
@@ -129,7 +131,6 @@ public class User {
     }
 
     @GetMapping("/user")
-    @ResponseBody
     Map<String, List<Teacher>> get(@RequestParam(defaultValue = "0") @Min(0) int begIndex, @RequestParam(defaultValue = "50") @Min(1) int count, @RequestParam(defaultValue = "teacherNo") String orderBy, @RequestParam(defaultValue = "true") boolean asc, HttpServletResponse response) {
         UserService.Order order = Arrays.stream(UserService.Order.values()).filter(i -> i.value().equals(orderBy)).findFirst().orElse(null);
         if (order == null || begIndex < 0 || count <= 0)
@@ -147,7 +148,6 @@ public class User {
     }
 
     @GetMapping("/count/user")
-    @ResponseBody
     Map<String, Long> count(HttpServletResponse response) {
         response.setStatus(HttpStatus.OK.value());
         return Map.of("count", userService.countUser());
