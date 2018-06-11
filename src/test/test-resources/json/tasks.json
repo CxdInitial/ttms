@@ -1,0 +1,211 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "填写任务",
+      "content": "一个填写内容",
+      "deadline": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 18
+        },
+        "time": {
+          "hour": 0,
+          "minute": 0,
+          "second": 0,
+          "nano": 0
+        }
+      },
+      "permitDelay": true,
+      "requiredAnnexType": "docx",
+      "strictMode": true,
+      "passToFill": true,
+      "annex": {
+        "id": 1,
+        "checkSum": "823613170ab519ec4a37d975265f0fac"
+      },
+      "submitter": {
+        "id": 1,
+        "teacherNo": 2015224306,
+        "teacherName": "赵雪梅",
+        "manager": true,
+        "male": false,
+        "phone": "18845891787",
+        "title": "管理员"
+      },
+      "insertTime": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 11
+        },
+        "time": {
+          "hour": 10,
+          "minute": 35,
+          "second": 57,
+          "nano": 0
+        }
+      },
+      "updateTime": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 11
+        },
+        "time": {
+          "hour": 10,
+          "minute": 35,
+          "second": 57,
+          "nano": 0
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "new填写任务",
+      "content": "新建的填写任务",
+      "deadline": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 18
+        },
+        "time": {
+          "hour": 0,
+          "minute": 0,
+          "second": 0,
+          "nano": 0
+        }
+      },
+      "permitDelay": true,
+      "requiredAnnexType": "docx",
+      "strictMode": true,
+      "passToFill": true,
+      "annex": {
+        "id": 2,
+        "checkSum": "e235ed82d93771cfbfd1b1389992dccc"
+      },
+      "submitter": {
+        "id": 1,
+        "teacherNo": 2015224306,
+        "teacherName": "赵雪梅",
+        "manager": true,
+        "male": false,
+        "phone": "18845891787",
+        "title": "管理员"
+      },
+      "insertTime": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 11
+        },
+        "time": {
+          "hour": 10,
+          "minute": 35,
+          "second": 57,
+          "nano": 0
+        }
+      },
+      "updateTime": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 11
+        },
+        "time": {
+          "hour": 10,
+          "minute": 35,
+          "second": 57,
+          "nano": 0
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "文件任务",
+      "content": "收集文件",
+      "deadline": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 18
+        },
+        "time": {
+          "hour": 0,
+          "minute": 0,
+          "second": 0,
+          "nano": 0
+        }
+      },
+      "permitDelay": true,
+      "requiredAnnexType": "docx",
+      "strictMode": true,
+      "passToFill": false,
+      "submitter": {
+        "id": 1,
+        "teacherNo": 2015224306,
+        "teacherName": "赵雪梅",
+        "manager": true,
+        "male": false,
+        "phone": "18845891787",
+        "title": "管理员"
+      },
+      "insertTime": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 11
+        },
+        "time": {
+          "hour": 10,
+          "minute": 35,
+          "second": 57,
+          "nano": 0
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "通知",
+      "content": "这是一条通知",
+      "deadline": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 18
+        },
+        "time": {
+          "hour": 0,
+          "minute": 0,
+          "second": 0,
+          "nano": 0
+        }
+      },
+      "permitDelay": true,
+      "submitter": {
+        "id": 1,
+        "teacherNo": 2015224306,
+        "teacherName": "赵雪梅",
+        "manager": true,
+        "male": false,
+        "phone": "18845891787",
+        "title": "管理员"
+      },
+      "insertTime": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 11
+        },
+        "time": {
+          "hour": 10,
+          "minute": 35,
+          "second": 58,
+          "nano": 0
+        }
+      }
+    }
+  ]
+}

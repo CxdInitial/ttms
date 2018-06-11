@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -92,15 +93,16 @@ class UserControllerTest {
 
         @ParameterizedTest
         @ValueSource(longs = {2015214287L, 2015224306L})
-        void updateNumber_created(long number) throws Exception {
+        void updateName_created(long number) throws Exception {
             long id = userService.findByNo(number).getId();
             MockHttpSession session = online(id);
-            mockMvc.perform(patch("/user/{id}", id).session(session).param("teacherNo", String.valueOf(number + 1)))
+            mockMvc.perform(patch("/user/{id}", id).session(session).param("teacherName", "新的名字"))
+                    .andDo(print())
                     .andExpect(status().is(HttpStatus.CREATED.value())).andReturn();
-            Assertions.assertNull(session.getAttribute("number"));
-            Assertions.assertEquals(number + 1, userService.find(id).getTeacherNo());
-            System.out.println("end");
+            Assertions.assertEquals("新的名字", userService.find(id).getTeacherName());
         }
+
+
     }
 
     @SpringBootTest
@@ -128,6 +130,7 @@ class UserControllerTest {
         void get_teacher(long number) throws Exception {
             long id = userService.findByNo(number).getId();
             mockMvc.perform(get("/user/{id}", id).session(online(id)).accept(MediaType.APPLICATION_JSON_UTF8))
+                    .andDo(print())
                     .andExpect(jsonPath("$.user.teacherName").value(userService.findByNo(number).getTeacherName()));
         }
 
@@ -135,6 +138,7 @@ class UserControllerTest {
         @EnumSource(UserService.Order.class)
         void get_orderedTeachers(UserService.Order order) throws Exception {
             mockMvc.perform(get("/user").param("orderBy", order.value()).session(online(userService.findByNo(2015224306L).getId())).accept(MediaType.APPLICATION_JSON_UTF8))
+                    .andDo(print())
                     .andExpect(status().is(HttpStatus.OK.value()))
                     .andExpect(jsonPath("$.users.length()").value(2));
         }

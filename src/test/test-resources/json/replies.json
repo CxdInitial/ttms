@@ -1,0 +1,30 @@
+{
+  "replies": [
+    {
+      "id": 3,
+      "replier": {
+        "id": 2,
+        "teacherNo": 2015214287,
+        "teacherName": "曹兴鼎",
+        "manager": false,
+        "male": true,
+        "phone": "18845631192",
+        "title": "教师"
+      },
+      "content": "回复",
+      "insertTime": {
+        "date": {
+          "year": 2018,
+          "month": 6,
+          "day": 11
+        },
+        "time": {
+          "hour": 10,
+          "minute": 37,
+          "second": 55,
+          "nano": 0
+        }
+      }
+    }
+  ]
+}

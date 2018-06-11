@@ -21,7 +21,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -52,7 +51,7 @@ class ExamControllerTest {
     void setup() {
         Teacher teacher = new Teacher();
         teacher.setLoginPassword("2zhaoxuemei");
-        teacher.setMale(true);
+        teacher.setMale(false);
         teacher.setTeacherName("赵雪梅");
         teacher.setIntro("我是赵雪梅");
         teacher.setPhone("18845891787");
@@ -73,7 +72,7 @@ class ExamControllerTest {
         Examination examination = new Examination();
         examination.setArea("丹青楼");
         examination.setClassroomNo("110");
-        examination.setExamDate(LocalDate.of(2018, 6, 6));
+        examination.setExamDate(LocalDate.of(2018, 6, 18));
         examination.setCourse("软件项目管理");
         examination.setBegNo((short) 7);
         examination.setEndNo((short) 8);
@@ -81,7 +80,7 @@ class ExamControllerTest {
         examination = new Examination();
         examination.setArea("丹青楼");
         examination.setClassroomNo("320");
-        examination.setExamDate(LocalDate.of(2018, 6, 9));
+        examination.setExamDate(LocalDate.of(2018, 6, 18));
         examination.setCourse("软件质量保证与测试");
         examination.setBegNo((short) 3);
         examination.setEndNo((short) 4);
@@ -109,7 +108,7 @@ class ExamControllerTest {
                     .session(online())
                     .param("area", examination.getArea())
                     .param("classroomNo", examination.getClassroomNo())
-                    .param("beginNo", String.valueOf(examination.getBegNo()))
+                    .param("begNo", String.valueOf(examination.getBegNo()))
                     .param("endNo", String.valueOf(examination.getEndNo()))
                     .param("examDate", examination.getExamDate().toString())
                     .param("course", examination.getCourse())
@@ -136,7 +135,7 @@ class ExamControllerTest {
                             .param("course", "服务科学与SOA基础")
                             .param("area", "丹青楼")
                             .param("classroomNo", "108")
-                            .param("beginNo", "7")
+                            .param("begNo", "7")
                             .param("endNo", "8")
                             .param("examDate", LocalDate.of(2018, 6, 28).toString()))
                     .andExpect(status().isCreated());
@@ -146,6 +145,7 @@ class ExamControllerTest {
         @ValueSource(longs = {1, 2})
         void get_exam(long id) throws Exception {
             mockMvc.perform(get("/examination/{id}", id).accept(MediaType.APPLICATION_JSON_UTF8).session(online()))
+                    .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.examination.id").value(id));
         }
@@ -153,6 +153,7 @@ class ExamControllerTest {
         @Test
         void get_exams() throws Exception {
             mockMvc.perform(get("/examination").accept(MediaType.APPLICATION_JSON_UTF8).session(online()))
+                    .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.examinations.length()").value(2));
         }
@@ -178,13 +179,6 @@ class ExamControllerTest {
         @BeforeEach
         void setup() {
             this.mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
-        }
-
-        @Test
-        void get_classrooms() throws Exception {
-            mockMvc.perform(get("/classroom").session(online()).accept(MediaType.APPLICATION_JSON_UTF8))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.classrooms.length()").value(2));
         }
     }
 

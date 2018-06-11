@@ -22,14 +22,14 @@ import java.util.*;
 
 @CrossOrigin(origins = "http://127.0.0.1:8010")
 @Controller
-@Valid
+@Validated
 @RequiredLevel(RequiredLevel.Level.ADMIN)
 public class User {
     private final LoginValidator jwcLoginValidator;
     private final UserService userService;
 
     @Autowired
-    public User(@Qualifier("additionalLoginValidator") LoginValidator loginValidator, UserService userService, FieldList<Teacher> userFieldNameList) {
+    public User(@Qualifier("additionalLoginValidator") LoginValidator loginValidator, UserService userService) {
         this.jwcLoginValidator = loginValidator;
         this.userService = userService;
     }
@@ -58,6 +58,8 @@ public class User {
 
     @PostMapping("/user")
     void register(@Validated Teacher teacher, HttpServletResponse response) {
+        if (teacher.getId() != 0)
+            throw new ConstraintViolationException(null);
         userService.register(teacher);
         response.setStatus(HttpStatus.CREATED.value()); //注册成功
     }
@@ -115,6 +117,7 @@ public class User {
         Teacher user = userService.find(id);
         user.setSuperviseRecords(null);
         user.setTasks(null);
+        user.setRecords(null);
         user.setLoginPassword(null);
         user.setUpdateTime(null);
         user.setInsertTime(null);
@@ -127,17 +130,17 @@ public class User {
 
     @GetMapping("/user")
     @ResponseBody
-    Map<String, List<Teacher>> get(@RequestParam(defaultValue = "0") @Min(0) int begIndex, @RequestParam(defaultValue = "50") @Min(0) int count, @RequestParam(defaultValue = "teacherNo") String orderBy, @RequestParam(defaultValue = "true") boolean asc, HttpServletResponse response) {
-        UserService.Order order = Arrays.stream(UserService.Order.values()).filter(i -> i.value().equals(orderBy)).findFirst().get();
-        if (begIndex < 0 || count <= 0)
+    Map<String, List<Teacher>> get(@RequestParam(defaultValue = "0") @Min(0) int begIndex, @RequestParam(defaultValue = "50") @Min(1) int count, @RequestParam(defaultValue = "teacherNo") String orderBy, @RequestParam(defaultValue = "true") boolean asc, HttpServletResponse response) {
+        UserService.Order order = Arrays.stream(UserService.Order.values()).filter(i -> i.value().equals(orderBy)).findFirst().orElse(null);
+        if (order == null || begIndex < 0 || count <= 0)
             throw new NoSuchElementException();
         List<Teacher> list = userService.find(order, begIndex, count, asc);
         if (list.isEmpty())
             throw new NoSuchElementException();
-        response.setStatus(HttpStatus.OK.value());
         list.forEach(user -> {
             user.setSuperviseRecords(null);
             user.setTasks(null);
+            user.setRecords(null);
             user.setLoginPassword(null);
         });
         return Collections.singletonMap("users", list);

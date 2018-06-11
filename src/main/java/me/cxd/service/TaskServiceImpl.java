@@ -3,7 +3,6 @@ package me.cxd.service;
 import me.cxd.bean.*;
 import me.cxd.dao.JpaDao;
 import me.cxd.util.FileUtils;
-import me.cxd.web.controller.User;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,9 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -43,6 +42,31 @@ public class TaskServiceImpl implements TaskService {
         this.typeDao = typeDao;
         this.recordDao = recordDao;
         this.fileUtils = fileUtils;
+    }
+
+    @Override
+    public void addAnnexType(AnnexType... types) {
+        Arrays.stream(types).forEach(typeDao::create);
+    }
+
+    @Override
+    public void add(Reply reply, long taskId, long userId) {
+        Teacher replier = userService.find(userId);
+        if (replier == null)
+            throw new NoSuchElementException();
+        reply.setReplier(replier);
+        Task task = taskDao.read(taskId);
+        if (task == null)
+            throw new NoSuchElementException();
+        CriteriaBuilder builder = replyDao.getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<Long> query = builder.createQuery(Long.class);
+        Root<Reply> root = query.from(Reply.class);
+        query.select(builder.count(root.get("id")));
+        query.where(builder.equal(root.get("replier").get("id"), userId), builder.equal(root.get("task").get("id"), taskId));
+        if (replyDao.getEntityManager().createQuery(query).getSingleResult() != 0)
+            throw new IllegalArgumentException("Already replied!");
+        reply.setTask(task);
+        replyDao.create(reply);
     }
 
     @Override
@@ -101,12 +125,12 @@ public class TaskServiceImpl implements TaskService {
         } catch (IndexOutOfBoundsException e) {
             throw new IllegalArgumentException();
         }
-        if (annex.getCheckSum().equalsIgnoreCase(record.getCheckSum()) && record.getByteSize() <= bytes.length && fileUtils.hasValidSignature(bytes, annex.getFileType())) {
+        if (annex.getCheckSum().equalsIgnoreCase(record.getCheckSum()) && record.getByteSize() <= bytes.length && (!task.getStrictMode() || task.getStrictMode() && fileUtils.hasValidSignature(bytes, annex.getFileType()))) {
             annex.setPath(Files.write(Paths.get(annex.getPath()), bytes).toString());
             annex.setCheckSum(fileUtils.md5(bytes));
             return annex;
-        } else
-            throw new IllegalArgumentException();
+        }
+        throw new IllegalArgumentException();
     }
 
     private AnnexType getType(byte[] bytes, String suffix) {
@@ -124,21 +148,21 @@ public class TaskServiceImpl implements TaskService {
         if (reply == null)
             throw new NoSuchElementException();
         Task task = reply.getTask();
-        if (task.getRequiredAnnexType() == null || task.getPassToFill() || reply.getAnnex() != null)
+        if (task.getRequiredAnnexType() == null)
             throw new IllegalArgumentException();
-        String[] names = fileName.split(".");
+        String[] names = fileName.split("\\.");
         String suffix = names[names.length - 1].toLowerCase();
         if (!suffix.equals(task.getRequiredAnnexType()))
-            throw new TypeMismatchException(null, null);
+            throw new TypeMismatchException((Object) null, null);
         Annex annex = new Annex();
         if (task.getStrictMode())
             annex.setFileType(getType(bytes, suffix));
         if (annex.getFileType() == null)
-            throw new TypeMismatchException(null, null);
+            throw new TypeMismatchException((Object) null, null);
         annex.setPath(Files.write(base.resolve(String.format("%d-%d.%s", task.getId(), replyId, suffix)), bytes).toString());
         annex.setCheckSum(fileUtils.md5(bytes));
+        annex.setReply(reply);
         annexDao.create(annex);
-        reply.setAnnex(annex);
         return annex;
     }
 
@@ -151,37 +175,53 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException();
         Annex annex = new Annex();
         annex.setCheckSum(fileUtils.md5(bytes));
-        String[] names = fileName.split(".");
+        String[] names = fileName.split("\\.");
         String suffix = names[names.length - 1].toLowerCase();
-        if (!suffix.equals(task.getRequiredAnnexType()))
-            throw new TypeMismatchException(null, null);
         Annex old = findAnnex(annex.getCheckSum());
         if (old != null && !task.getPassToFill())
             annex.setPath(old.getPath());
         else
             annex.setPath(Files.write(base.resolve(String.format("%d.%s", taskId, suffix)), bytes).toString());
-        if (task.getPassToFill() && task.getStrictMode())
-            annex.setFileType(getType(bytes, suffix));
+        if (task.getPassToFill()) {
+            if (!suffix.equals(task.getRequiredAnnexType()))
+                throw new TypeMismatchException((Object) null, null);
+            if (task.getStrictMode())
+                annex.setFileType(getType(bytes, suffix));
+        }
         if (annex.getFileType() == null)
-            throw new TypeMismatchException(null, null);
+            throw new TypeMismatchException((Object) null, null);
+        annexDao.create(annex);
         task.setAnnex(annex);
         return annex;
     }
 
     @Override
-    public byte[] retrieve(long userId, String checkSum, String[] fileName) throws IOException {
-        Annex annex = findAnnex(checkSum);
+    public byte[] retrieve(long userId, long id, String[] fileName) throws IOException {
+        Annex annex = annexDao.read(id);
         if (annex == null)
             throw new NoSuchElementException("Found no list with the given check sum.");
         Teacher user = userService.find(userId);
         if (user == null)
             throw new NoSuchElementException("Found no user with the given ID.");
         Reply reply = annex.getReply();
-        fileName[0] = String.format("%s-%d.%s", reply.getTask().getTitle(), reply.getReplier().getTeacherNo(), reply.getTask().getRequiredAnnexType());
-        DownloadRecord record = new DownloadRecord();
-        record.setUser(user);
-        record.setAnnex(annex);
-        record.setCheckSum(annex.getCheckSum());
+        if (reply != null)
+            fileName[0] = String.format("%s-%d.%s", reply.getTask().getTitle(), reply.getReplier().getTeacherNo(), reply.getTask().getRequiredAnnexType());
+        else {
+            CriteriaBuilder builder = taskDao.getEntityManager().getCriteriaBuilder();
+            CriteriaQuery<Task> query = builder.createQuery(Task.class);
+            Root<Task> root = query.from(Task.class);
+            query.select(root);
+            query.where(builder.equal(root.get("annex").get("id"), id));
+            List<Task> list = taskDao.getEntityManager().createQuery(query).getResultList();
+            if (list.isEmpty())
+                throw new IllegalArgumentException();
+            fileName[0] = String.format("%s.%s", list.get(0).getTitle(), list.get(0).getRequiredAnnexType());
+            DownloadRecord record = new DownloadRecord();
+            record.setUser(user);
+            record.setAnnex(annex);
+            record.setCheckSum(annex.getCheckSum());
+            recordDao.create(record);
+        }
         return Files.readAllBytes(Paths.get(annex.getPath()));
     }
 
@@ -294,7 +334,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void add(Task task) {
-        taskDao.create(task);
+    public void add(Task task, long userId) {
+        Teacher user = userService.find(userId);
+        if (user == null)
+            throw new NoSuchElementException();
+        task.setSubmitter(user);
+        taskDao.getEntityManager().persist(task);
     }
 }

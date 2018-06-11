@@ -28,7 +28,6 @@ public class JpaDaoImpl<T> implements JpaDao<T> {
     @Override
     public void create(T t) {
         entityManager.persist(t);
-        entityManager.refresh(t);
     }
 
     @Override

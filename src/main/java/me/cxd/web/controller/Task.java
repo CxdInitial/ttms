@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,8 +20,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,17 +49,15 @@ public class Task {
     }
 
     @PutMapping(value = "/annex", params = "taskId")
-    @ResponseBody
-    Map<String, String> upload(@RequestParam long taskId, @RequestParam("annex") MultipartFile file, @SessionAttribute long user, HttpServletResponse response) throws IOException {
-        Annex annex = taskService.passToFill(taskId, user, file.getBytes());
+    void upload(@RequestParam long taskId, @RequestParam("annexFile") MultipartFile file, HttpSession session, HttpServletResponse response) throws IOException {
+        Annex annex = taskService.passToFill(taskId, (Long) session.getAttribute("user"), file.getBytes());
         response.setStatus(HttpStatus.OK.value());
-        return Collections.singletonMap("hash", annex.getCheckSum());
     }
 
     @PostMapping(value = "/annex", params = "taskId")
     @ResponseBody
     @RequiredLevel(RequiredLevel.Level.ADMIN)
-    Map<String, String> upload(@RequestParam long taskId, @RequestParam("annex") MultipartFile file, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    Map<String, String> upload(@RequestParam long taskId, @RequestParam("annexFile") MultipartFile file, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (file.isEmpty() || !file.getOriginalFilename().contains("."))
             throw new ConstraintViolationException(null);
         Path base = Paths.get(request.getServletContext().getRealPath("/annexes"));
@@ -73,27 +68,14 @@ public class Task {
         return Collections.singletonMap("hash", annex.getCheckSum());
     }
 
-    @PostMapping(value = "/annex", params = "replyId")
-    @ResponseBody
-    Map<String, String> upload(@RequestParam("annex") MultipartFile file, @RequestParam long replyId, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (file.isEmpty())
-            throw new ConstraintViolationException(null);
-        Path base = Paths.get(request.getServletContext().getRealPath("/annexes"));
-        if (Files.notExists(base))
-            Files.createDirectory(base);
-        Annex annex = taskService.storeReplyAnnex(replyId, base, file.getBytes(), file.getOriginalFilename());
-        response.setStatus(HttpStatus.CREATED.value());
-        return Collections.singletonMap("hash", annex.getCheckSum());
-    }
-
-    @GetMapping("/annex/{hash}")
-    ResponseEntity<byte[]> download(@PathVariable String hash, @SessionAttribute long user) {
+    @GetMapping("/annex/{id}")
+    ResponseEntity<byte[]> download(@PathVariable long id, HttpSession session) {
         String[] fileName = new String[1];
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         byte[] bytes;
         try {
-            bytes = taskService.retrieve(user, hash, fileName);
+            bytes = taskService.retrieve(((Long) session.getAttribute("user")), id, fileName);
         } catch (IOException e) {
             throw new NoSuchElementException();
         }
@@ -103,15 +85,19 @@ public class Task {
 
     @PostMapping("/task")
     @RequiredLevel(RequiredLevel.Level.ADMIN)
-    void add(@Validated me.cxd.bean.Task task, HttpServletResponse response)
-
-    {
-        if ((task.getRequiredAnnexType() == null && task.getPassToFill())
-                || (task.getStrictMode() && task.getRequiredAnnexType() == null)
-                || (task.getStrictMode() && taskService.findSupportedAnnexTypes().stream().noneMatch(type -> type.equals(task.getRequiredAnnexType()))))
+    @ResponseBody
+    Map<String, Long> add(@Validated me.cxd.bean.Task task, @RequestParam(value = "annexFile", required = false) MultipartFile file, HttpServletRequest request, HttpSession session, HttpServletResponse response) throws IOException {
+        if (task.getAnnex() != null || task.getSubmitter() != null || task.getId() != 0 || (task.getStrictMode() != null && task.getStrictMode() && taskService.findSupportedAnnexTypes().stream().noneMatch(type -> type.equals(task.getRequiredAnnexType()))) || (task.getRequiredAnnexType() != null && task.getPassToFill() && (file == null || file.isEmpty())))
             throw new ConstraintViolationException(null);
-        taskService.add(task);
+        Path base = Paths.get(request.getServletContext().getRealPath("/annexes"));
+        if (!Files.exists(base))
+            Files.createDirectory(base);
+        if (file != null)
+            taskService.add(task, ((Long) session.getAttribute("user")), base, file.getBytes(), file.getOriginalFilename());
+        else
+            taskService.add(task, ((Long) session.getAttribute("user")));
         response.setStatus(HttpStatus.CREATED.value());
+        return Collections.singletonMap("id", task.getId());
     }
 
     @GetMapping("/task/{id}")
@@ -122,13 +108,16 @@ public class Task {
             throw new NoSuchElementException();
         task.setReplies(null);
         Annex annex = task.getAnnex();
-        annex.setPath(null);
-        annex.setFileType(null);
+        if (annex != null) {
+            annex.setPath(null);
+            annex.setFileType(null);
+        }
         Teacher user = task.getSubmitter();
         user.setLoginPassword(null);
         user.setIntro(null);
         user.setSuperviseRecords(null);
         user.setTasks(null);
+        user.setRecords(null);
         user.setUpdateTime(null);
         user.setInsertTime(null);
         response.setStatus(HttpStatus.OK.value());
@@ -151,9 +140,9 @@ public class Task {
             throw new ConstraintViolationException(null);
         TaskService.Order order = Arrays.stream(TaskService.Order.values()).filter(o -> o.value().equals(orderBy)).findFirst().get();
         List<me.cxd.bean.Task> list;
-        if (selfNotReply)
+        if (selfNotReply != null && selfNotReply)
             list = taskService.findNotReplied(requiredAnnex, passToFill, ((Long) session.getAttribute("user")), beginIndex, count, order);
-        else if (allReply)
+        else if (allReply != null && allReply)
             list = taskService.findAllReplied(requiredAnnex, passToFill, beginIndex, count, order);
         else list = taskService.find(requiredAnnex, passToFill, beginIndex, count, order);
         if (list.isEmpty())
@@ -161,13 +150,16 @@ public class Task {
         list.forEach(task -> {
             task.setReplies(null);
             Annex annex = task.getAnnex();
-            annex.setPath(null);
-            annex.setFileType(null);
+            if (annex != null) {
+                annex.setPath(null);
+                annex.setFileType(null);
+            }
             Teacher user = task.getSubmitter();
             user.setLoginPassword(null);
             user.setIntro(null);
             user.setSuperviseRecords(null);
             user.setTasks(null);
+            user.setRecords(null);
             user.setUpdateTime(null);
             user.setInsertTime(null);
         });
@@ -203,6 +195,37 @@ public class Task {
         List<Reply> list = taskService.findReplies(taskId, begIndex, count);
         if (list.isEmpty())
             throw new NoSuchElementException();
+        list.forEach(reply -> {
+            Teacher user = reply.getReplier();
+            user.setLoginPassword(null);
+            user.setIntro(null);
+            user.setSuperviseRecords(null);
+            user.setTasks(null);
+            user.setRecords(null);
+            user.setUpdateTime(null);
+            user.setInsertTime(null);
+            reply.setTask(null);
+        });
         return Collections.singletonMap("replies", list);
+    }
+
+    @PostMapping("/reply")
+    @ResponseBody
+    Map<String, Long> addReply(@RequestParam(value = "annexFile", required = false) MultipartFile file, @Validated Reply reply, @RequestParam long taskId, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (reply.getId() != 0 || reply.getTask() != null)
+            throw new ConstraintViolationException(null);
+        me.cxd.bean.Task task = taskService.find(taskId);
+        if (task.getRequiredAnnexType() == null)
+            taskService.add(reply, taskId, ((Long) request.getSession().getAttribute("user")));
+        else {
+            if (file == null || file.isEmpty())
+                throw new ConstraintViolationException(null);
+            Path base = Paths.get(request.getServletContext().getRealPath("/annexes"));
+            if (Files.notExists(base))
+                Files.createDirectory(base);
+            taskService.add(reply, taskId, ((Long) request.getSession().getAttribute("user")), base, file.getBytes(), file.getOriginalFilename());
+        }
+        response.setStatus(HttpStatus.CREATED.value());
+        return Collections.singletonMap("id", reply.getId());
     }
 }

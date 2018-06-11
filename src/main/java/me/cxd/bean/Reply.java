@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Entity
 public class Reply {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @ManyToOne(optional = false)
@@ -21,21 +22,8 @@ public class Reply {
     @NotBlank
     private String content;
 
-    @OneToOne
-    @Null
-    private Annex annex;
-
-    @Null
     @Column(insertable = false, updatable = false, columnDefinition = "timestamp null default current_timestamp")
     private LocalDateTime insertTime;
-
-    public Annex getAnnex() {
-        return annex;
-    }
-
-    public void setAnnex(Annex annex) {
-        this.annex = annex;
-    }
 
     public long getId() {
         return id;

@@ -1,6 +1,7 @@
 package me.cxd.util;
 
 import me.cxd.bean.AnnexType;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Component;
 
@@ -16,15 +17,11 @@ public class FileUtils {
         int offset = type.getByteOffset();
         if (bytes.length < length / 2 + offset)
             return false;
-        for (int i = offset; i < length / 2 + offset; i++) {
-            char a = (char) ('0' + (bytes[i] & 0x10000000) * 8 + (bytes[i] & 0x01000000) * 4 + (bytes[i] & 0x00100000) * 2 + (bytes[i] & 0x00010000));
-            char b = (char) ('0' + (bytes[i] & 0x00001000) * 8 + (bytes[i] & 0x00000100) * 4 + (bytes[i] & 0x00000010) * 2 + (bytes[i] & 0x00000001));
-            char a1 = type.getHex().charAt(2 * (i - offset)), b1 = type.getHex().charAt(2 * (i - offset) + 1);
-            if (a1 != '?' && (a1 > '9' ? a1 - 8 : a1) != a)
+        char[] realHex = Hex.encodeHex(Arrays.copyOfRange(bytes, offset, length / 2 + offset));
+        char[] hex = type.getHex().toLowerCase().toCharArray();
+        for (int i = 0; i < hex.length; i++)
+            if (hex[i] != '?' && hex[i] != realHex[i])
                 return false;
-            if (b1 != '?' && (b1 > '9' ? b1 - 8 : b1) != b)
-                return false;
-        }
         return true;
     }
 

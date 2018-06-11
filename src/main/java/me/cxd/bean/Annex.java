@@ -5,6 +5,7 @@ import javax.persistence.*;
 @Entity
 public class Annex {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(nullable = false)

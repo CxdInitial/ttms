@@ -1,0 +1,43 @@
+{
+  "task": {
+    "id": 4,
+    "title": "通知",
+    "content": "这是一条通知",
+    "deadline": {
+      "date": {
+        "year": 2018,
+        "month": 6,
+        "day": 18
+      },
+      "time": {
+        "hour": 0,
+        "minute": 0,
+        "second": 0,
+        "nano": 0
+      }
+    },
+    "permitDelay": true,
+    "submitter": {
+      "id": 1,
+      "teacherNo": 2015224306,
+      "teacherName": "赵雪梅",
+      "manager": true,
+      "male": false,
+      "phone": "18845891787",
+      "title": "管理员"
+    },
+    "insertTime": {
+      "date": {
+        "year": 2018,
+        "month": 6,
+        "day": 11
+      },
+      "time": {
+        "hour": 10,
+        "minute": 37,
+        "second": 55,
+        "nano": 0
+      }
+    }
+  }
+}

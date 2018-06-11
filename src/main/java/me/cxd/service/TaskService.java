@@ -1,9 +1,11 @@
 package me.cxd.service;
 
 import me.cxd.bean.Annex;
+import me.cxd.bean.AnnexType;
 import me.cxd.bean.Reply;
 import me.cxd.bean.Task;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,6 +24,16 @@ public interface TaskService {
         public String value() {
             return val;
         }
+    }
+
+    void addAnnexType(AnnexType... types);
+
+    void add(Reply reply, long taskId, long userId);
+
+    @Transactional
+    default void add(Reply reply, long taskId, long userId, Path base, byte[] bytes, String fileName) throws IOException {
+        add(reply, taskId, userId);
+        storeReplyAnnex(reply.getId(), base, bytes, fileName);
     }
 
     /**
@@ -66,11 +78,11 @@ public interface TaskService {
     /**
      * Retrieve the annex with the given check sum.
      *
-     * @param userId:   the ID of the user who did this action
-     * @param checkSum: the check sum of annex
+     * @param userId: the ID of the user who did this action
+     * @param id:     the ID of annex
      * @return found annex
      */
-    byte[] retrieve(long userId, String checkSum, String[] fileName) throws IOException;
+    byte[] retrieve(long userId, long id, String[] fileName) throws IOException;
 
     /**
      * Find task with the given ID.
@@ -97,5 +109,11 @@ public interface TaskService {
      *
      * @param task: task to be added
      */
-    void add(Task task);
+    void add(Task task, long userId);
+
+    @Transactional
+    default Annex add(Task task, long userId, Path base, byte[] bytes, String fileName) throws IOException {
+        add(task, userId);
+        return storeTaskAnnex(task.getId(), base, bytes, fileName);
+    }
 }

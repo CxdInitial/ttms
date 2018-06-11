@@ -1,0 +1,12 @@
+{
+  "user": {
+    "id": 1,
+    "teacherNo": 2015214287,
+    "teacherName": "曹兴鼎",
+    "manager": false,
+    "male": true,
+    "phone": "18845631192",
+    "title": "教师",
+    "intro": "我是曹兴鼎"
+  }
+}

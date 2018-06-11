@@ -22,7 +22,7 @@
     <bean class="org.hibernate.validator.HibernateValidator"/>
 
     <!--Bean的方法参数校验-->
-    <!--<bean class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor"/>-->
+    <bean class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor"/>
 
     <mvc:annotation-driven>
         <mvc:message-converters>

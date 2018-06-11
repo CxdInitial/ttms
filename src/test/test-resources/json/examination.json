@@ -1,0 +1,28 @@
+{
+  "examination": {
+    "id": 1,
+    "examDate": {
+      "year": 2018,
+      "month": 6,
+      "day": 18
+    },
+    "course": "软件项目管理",
+    "begNo": 7,
+    "endNo": 8,
+    "area": "丹青楼",
+    "classroomNo": "110",
+    "insertTime": {
+      "date": {
+        "year": 2018,
+        "month": 6,
+        "day": 11
+      },
+      "time": {
+        "hour": 10,
+        "minute": 50,
+        "second": 30,
+        "nano": 0
+      }
+    }
+  }
+}

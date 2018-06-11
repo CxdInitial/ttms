@@ -83,9 +83,10 @@ public class Exam {
     @PostMapping("/examination")
     @RequiredLevel(RequiredLevel.Level.ADMIN)
     @ResponseBody
-    void add(@Validated Examination examination, HttpServletResponse response) {
+    Map<String, Long> add(@Validated Examination examination, HttpServletResponse response) {
         response.setStatus(HttpStatus.CREATED.value());
         examService.add(examination);
+        return Map.of("id", examination.getId());
     }
 
     @PutMapping("/examination/{id}")

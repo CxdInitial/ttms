@@ -10,6 +10,7 @@ import java.util.List;
 @Entity
 public class Task {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(nullable = false)
@@ -39,12 +40,17 @@ public class Task {
     @Column
     private Boolean passToFill;
 
-    @Null
+    @AssertTrue
+    public boolean validateAnnexRequirement() {
+        if (requiredAnnexType == null) {
+            return passToFill == null && strictMode == null;
+        } else return strictMode != null && passToFill != null;
+    }
+
     @OneToOne
     private Annex annex;
 
     @ManyToOne(optional = false)
-    @Null
     private Teacher submitter;
 
     @OneToMany(mappedBy = "task")
