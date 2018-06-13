@@ -1,7 +1,5 @@
 package me.cxd.dao;
 
-import me.cxd.bean.Teacher;
-
 import javax.persistence.EntityManager;
 import javax.persistence.Id;
 import javax.persistence.PersistenceContext;

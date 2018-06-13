@@ -1,7 +1,7 @@
 {
   "name": "cxd",
   "description": "A Vue.js project",
-  "author": "yi.shyang@ele.me",
+  "author": "2caoxingding@gmail.com",
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --inline --hot --env.dev",

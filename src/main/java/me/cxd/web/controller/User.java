@@ -3,19 +3,18 @@ package me.cxd.web.controller;
 import me.cxd.bean.Teacher;
 import me.cxd.service.LoginValidator;
 import me.cxd.service.UserService;
-import me.cxd.util.FieldList;
-import me.cxd.web.authentic.*;
+import me.cxd.web.authentic.NotSelfAndAdmin;
+import me.cxd.web.authentic.RequiredLevel;
+import me.cxd.web.authentic.Self;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 import java.util.*;
@@ -35,7 +34,7 @@ public class User {
 
     @RequiredLevel(RequiredLevel.Level.NOBODY)
     @PostMapping("/authentication")
-    Map<String, Long> login(@RequestParam @Min(value = 1000000000L) long teacherNo, @RequestParam @Pattern(regexp = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$") String loginPassword, HttpSession session, HttpServletResponse response) {
+    Map<String, Teacher> login(@RequestParam @Min(value = 1000000000L) long teacherNo, @RequestParam @Pattern(regexp = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$") String loginPassword, HttpSession session, HttpServletResponse response) {
         if (userService.isValidUser(teacherNo, loginPassword))
             response.setStatus(HttpStatus.CREATED.value()); //成功
         else if (jwcLoginValidator.isValidUser(teacherNo, loginPassword)) {
@@ -45,9 +44,15 @@ public class User {
         } else
             response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value()); //密码错误
         if (response.getStatus() == HttpStatus.CREATED.value()) {
-            long id = userService.findByNo(teacherNo).getId();
-            session.setAttribute("user", id);
-            return Map.of("id", id);
+            Teacher user = userService.findByNo(teacherNo);
+            session.setAttribute("user", user.getId());
+            user.setSuperviseRecords(null);
+            user.setTasks(null);
+            user.setRecords(null);
+            user.setLoginPassword(null);
+            user.setUpdateTime(null);
+            user.setInsertTime(null);
+            return Map.of("user", user);
         }
         return null;
     }
@@ -108,7 +113,7 @@ public class User {
 
     @DeleteMapping("/user/{id}")
     @NotSelfAndAdmin
-    void remove(@PathVariable long id, HttpServletResponse response, HttpSession session) {
+    void remove(@PathVariable long id, HttpServletResponse response) {
         userService.remove(id);
         response.setStatus(HttpStatus.NO_CONTENT.value());
     }
@@ -117,6 +122,8 @@ public class User {
     @RequiredLevel(RequiredLevel.Level.TEACHER)
     Map<String, Teacher> get(@PathVariable long id, HttpServletResponse response) {
         Teacher user = userService.find(id);
+        if (user==null)
+            throw new NoSuchElementException();
         user.setSuperviseRecords(null);
         user.setTasks(null);
         user.setRecords(null);
@@ -142,7 +149,6 @@ public class User {
             user.setSuperviseRecords(null);
             user.setTasks(null);
             user.setRecords(null);
-            user.setLoginPassword(null);
         });
         return Collections.singletonMap("users", list);
     }

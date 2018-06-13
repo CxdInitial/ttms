@@ -1,24 +1,27 @@
 <template>
-  <el-popover placement="bottom-end" width="auto" trigger="click">
-    <table>
-      <tr>
-        <td>学工号：</td>
-        <td>
-          <el-input v-model="user.teacherNo" placeholder="学工号" name="teacherNo" />
-        </td>
-      </tr>
-      <tr>
-        <td>密码：</td>
-        <td>
-          <el-input v-model="user.loginPassword" @keydown.enter="login" type="password" placeholder="本系统或教务处密码" name="loginPassword" />
-        </td>
-      </tr>
-    </table>
-    <div id="login-btn">
-      <el-button :loading="submitting" @click="process($event)" size="small">确定</el-button>
-    </div>
-    <el-button slot="reference">{{btnText}}</el-button>
-  </el-popover>
+  <div id="log">
+    <el-popover placement="bottom-end" width="auto" trigger="hover" v-show="!authenticated">
+      <table>
+        <tr>
+          <td>学工号：</td>
+          <td>
+            <el-input v-model="teacherNo" placeholder="学工号" name="teacherNo" />
+          </td>
+        </tr>
+        <tr>
+          <td>密码：</td>
+          <td>
+            <el-input v-model="loginPassword" @keydown.enter="login" type="password" placeholder="本系统或教务处密码" name="loginPassword" />
+          </td>
+        </tr>
+      </table>
+      <div id="login-btn">
+        <el-button :loading="submitting" @click="login" size="small">确定</el-button>
+      </div>
+      <el-button slot="reference">登录</el-button>
+    </el-popover>
+    <el-button v-show="authenticated" @click="logout">退出</el-button>
+  </div>
 </template>
 
 <script>
@@ -27,27 +30,36 @@ import Bus from '@/util/Bus'
 import Validator from '@/util/Validator'
 
 export default {
+  props: {
+    user: Object
+  },
   data: function() {
     return {
-      user: {
-        teacherNo: '',
-        loginPassword: ''
-      },
-      submitting: false,
-      authenticated: false
+      teacherNo: '2015224306',
+      loginPassword: '2zhaoxuemei',
+      submitting: false
     }
   },
   computed: {
-    btnText: function() {
-      return this.authenticated ? '退出' : '登录'
+    authenticated: function() {
+      return this.user && this.user.id
     }
   },
   methods: {
-    process(event) {
-      return this.authenticated ? this.logout() : this.login()
-    },
     login() {
-      var errorFields = Validator.userValidate(this.user)
+      if (this.authenticated) {
+        this.$notify({
+          title: '您已登录，请退出后重新登录',
+          type: 'info',
+          duration: 5000,
+          position: 'top-right'
+        })
+        return false
+      }
+      var errorFields = Validator.userValidate({
+        teacherNo: this.teacherNo,
+        loginPassword: this.loginPassword
+      })
       if (errorFields.length) {
         this.$notify({
           title: '输入格式错误',
@@ -62,8 +74,8 @@ export default {
         method: 'post',
         url: '/authentication',
         params: {
-          loginPassword: this.user.loginPassword,
-          teacherNo: this.user.teacherNo
+          loginPassword: this.loginPassword,
+          teacherNo: this.teacherNo
         }
       })
         .then(response => {
@@ -73,9 +85,8 @@ export default {
             duration: 5000,
             position: 'top-right'
           })
-          this.login = true
-          Bus.$emit(Bus.login, this.user.teacherNo)
           this.submitting = false
+          Bus.$emit(Bus.login, response.data.user)
         })
         .catch(error => {
           if (error.response) {
@@ -123,7 +134,7 @@ export default {
             position: 'top-right'
           })
           this.submitting = false
-          this.login = false
+          Bus.$emit(Bus.logout)
         })
         .catch(error => {
           this.$notify({
@@ -144,6 +155,11 @@ export default {
   display: flex;
   justify-content: right;
   margin: 10px 15px 5px 15px;
+}
+#log {
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: row;
 }
 </style>
 

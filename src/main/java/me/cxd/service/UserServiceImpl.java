@@ -75,9 +75,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void remove(long id) throws NoSuchElementException {
-        if (find(id) == null)
+        Teacher teacher;
+        if ((teacher = find(id)) == null)
             throw new NoSuchElementException("Found no user with id: " + id);
-        userDao.delete(id);
+        userDao.getEntityManager().remove(teacher);
     }
 
     @Override

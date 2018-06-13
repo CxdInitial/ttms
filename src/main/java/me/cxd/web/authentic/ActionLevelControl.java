@@ -43,7 +43,7 @@ public class ActionLevelControl {
         return current;
     }
 
-    @Around("@within(org.springframework.stereotype.Controller)&&@annotation(notSelf)")
+    @Around("@within(org.springframework.web.bind.annotation.RestController)&&@annotation(notSelf)")
     Object self(ProceedingJoinPoint pjp, NotSelf notSelf) throws Throwable {
         Long action = getActionUserId(pjp);
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
@@ -56,7 +56,7 @@ public class ActionLevelControl {
         return defaultValue.get(((MethodSignature) pjp.getSignature()).getReturnType());
     }
 
-    @Around("@within(org.springframework.stereotype.Controller)&&@annotation(notSelfAndAdmin)")
+    @Around("@within(org.springframework.web.bind.annotation.RestController)&&@annotation(notSelfAndAdmin)")
     Object self(ProceedingJoinPoint pjp, NotSelfAndAdmin notSelfAndAdmin) throws Throwable {
         Long action = getActionUserId(pjp);
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
@@ -69,7 +69,7 @@ public class ActionLevelControl {
         return defaultValue.get(((MethodSignature) pjp.getSignature()).getReturnType());
     }
 
-    @Around("@within(org.springframework.stereotype.Controller)&&@annotation(self)")
+    @Around("@within(org.springframework.web.bind.annotation.RestController)&&@annotation(self)")
     Object self(ProceedingJoinPoint pjp, Self self) throws Throwable {
         Long action = getActionUserId(pjp);
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
@@ -82,7 +82,7 @@ public class ActionLevelControl {
         return defaultValue.get(((MethodSignature) pjp.getSignature()).getReturnType());
     }
 
-    @Around("@within(org.springframework.stereotype.Controller)&&@annotation(selfOrAdmin)")
+    @Around("@within(org.springframework.web.bind.annotation.RestController)&&@annotation(selfOrAdmin)")
     Object selfOrAdmin(ProceedingJoinPoint pjp, SelfOrAdmin selfOrAdmin) throws Throwable {
         Long action = getActionUserId(pjp);
         HttpSession session = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getSession(true);
@@ -95,7 +95,7 @@ public class ActionLevelControl {
         return defaultValue.get(((MethodSignature) pjp.getSignature()).getReturnType());
     }
 
-    @Around("@within(org.springframework.stereotype.Controller)&&(!@annotation(me.cxd.web.authentic.Self))&&(!@annotation(me.cxd.web.authentic.NotSelf))&&(!@annotation(me.cxd.web.authentic.SelfOrAdmin))&&(!@annotation(me.cxd.web.authentic.NotSelfAndAdmin))&&(@within(level)||@annotation(level))")
+    @Around("@within(org.springframework.web.bind.annotation.RestController)&&(!@annotation(me.cxd.web.authentic.Self))&&(!@annotation(me.cxd.web.authentic.NotSelf))&&(!@annotation(me.cxd.web.authentic.SelfOrAdmin))&&(!@annotation(me.cxd.web.authentic.NotSelfAndAdmin))&&(@within(level)||@annotation(level))")
     Object level(ProceedingJoinPoint pjp, RequiredLevel level) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) pjp.getSignature();
         if (level == null)

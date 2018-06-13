@@ -14,13 +14,13 @@ export default new Object({
   },
   examValidate: function(exam) {
     var errorFields = []
-    for (var prop in regexs.examination) {
+    for (var prop in regexs.exam) {
       if (exam.hasOwnProperty(prop)) {
         if (
-          !regexs.user.hasOwnProperty(prop) ||
-          !String(user[prop]).match(regexs.user[prop])
+          !regexs.exam.hasOwnProperty(prop) ||
+          !String(exam[prop]).match(regexs.exam[prop])
         )
-          return errorFields.push(String(prop))
+          errorFields.push(String(prop))
       }
     }
     var validBegEnd = function(user) {
@@ -42,6 +42,7 @@ export default new Object({
 
 var regexs = {
   user: {
+    id: '^[0-9]{1,}$',
     teacherName: '^[\u2E80-\u9FFF]{2,5}$',
     teacherNo: '^[1-2][0-9]{9}$',
     loginPassword: '^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$',
@@ -52,7 +53,7 @@ var regexs = {
     title: '^(?=\\s*\\S).*$',
     intro: '^(?=\\s*\\S).*$'
   },
-  examination: {
+  exam: {
     examDate: '^[1-9][0-9]{3}-[0-9]{2}-[0-9]{2}$',
     course: '^(?=\\s*\\S).*$',
     beginNo: '^(([1-9])|(1[0-2]))$',
