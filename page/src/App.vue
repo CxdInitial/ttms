@@ -4,18 +4,26 @@
       <el-header>
         <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect" background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
           <el-menu-item index="/">主页</el-menu-item>
-          <el-menu-item index="/user">人员管理</el-menu-item>
-          <el-menu-item index="/exam">考试管理</el-menu-item>
-          <el-submenu index="/task">
+          <el-submenu index="user">
+            <template slot="title">人员管理</template>
+            <el-menu-item index="/user/others">全部用户</el-menu-item>
+            <el-menu-item index="/user/register">注册用户</el-menu-item>
+          </el-submenu>
+          <el-submenu index="exam">
+            <template slot="title">考试安排</template>
+            <el-menu-item index="/exam/all">全部考试</el-menu-item>
+            <el-menu-item index="/exam/own">与我相关</el-menu-item>
+          </el-submenu>
+          <el-submenu index="task">
             <template slot="title">任务中心</template>
-            <el-menu-item index="/task/2-1">选项1</el-menu-item>
-            <el-menu-item index="/task/2-2">选项2</el-menu-item>
-            <el-menu-item index="/task/2-3">选项3</el-menu-item>
-            <el-submenu index="/task/2-4">
+            <el-menu-item index="1">选项1</el-menu-item>
+            <el-menu-item index="2">选项2</el-menu-item>
+            <el-menu-item index="3">选项3</el-menu-item>
+            <el-submenu index="4">
               <template slot="title">选项4</template>
-              <el-menu-item index="/task/2-4-1">选项1</el-menu-item>
-              <el-menu-item index="/task/2-4-2">选项2</el-menu-item>
-              <el-menu-item index="/task/2-4-3">选项3</el-menu-item>
+              <el-menu-item index="1">选项1</el-menu-item>
+              <el-menu-item index="2">选项2</el-menu-item>
+              <el-menu-item index="3">选项3</el-menu-item>
             </el-submenu>
           </el-submenu>
         </el-menu>
@@ -41,7 +49,7 @@ export default {
   data: function() {
     return {
       user: null,
-      activeIndex: ''
+      activeIndex: '/'
     }
   },
   watch: {
@@ -63,6 +71,9 @@ export default {
       this.user = null
       this.$router.push({ path: '/' })
     })
+  },
+  created: function() {
+    this.activeIndex = this.$route.path
   }
 }
 </script>

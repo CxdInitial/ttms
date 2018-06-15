@@ -29,7 +29,8 @@ public class Advice {
     }
 
     @ExceptionHandler({IllegalArgumentException.class,IOException.class})
-    void illegalParam(HttpServletResponse response) {
+    void illegalParam(HttpServletResponse response,Exception e) {
+        e.printStackTrace();
         response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
     }
 }

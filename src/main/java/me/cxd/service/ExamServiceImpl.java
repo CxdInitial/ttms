@@ -112,9 +112,9 @@ public class ExamServiceImpl implements ExamService {
         if (classroomNo != null)
             predicates.add(builder.equal(root.get("examination").get("classroomNo"), classroomNo));
         if (beg != null)
-            predicates.add(builder.greaterThanOrEqualTo(root.get("examDate"), beg));
+            predicates.add(builder.greaterThanOrEqualTo(root.get("examination").get("examDate"), beg));
         if (end != null)
-            predicates.add(builder.lessThanOrEqualTo(root.get("examDate"), end));
+            predicates.add(builder.lessThanOrEqualTo(root.get("examination").get("examDate"), end));
         if (begNo != null)
             predicates.add(builder.ge(root.get("examination").get("begNo"), begNo == null ? 1 : begNo));
         if (endNo != null)

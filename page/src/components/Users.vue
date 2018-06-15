@@ -56,32 +56,32 @@
       <span slot="empty">{{emptyText}}</span>
     </el-table>
     <el-dialog title="修改个人信息" :visible.sync="operating" width="50%" style="margin-right:100px" :before-close="removeAction">
-      <el-form>
-        <el-form-item label="学工号" label-width="100px">
-          <el-input v-model.number="action.teacherNo" minlength="10" maxlength="10" />
+      <el-form ref="form" :model="action" :rules="rules">
+        <el-form-item label="学工号" label-width="100px" prop="teacherNo">
+          <el-input v-model="action.teacherNo" minlength="10" maxlength="10" />
         </el-form-item>
-        <el-form-item label="姓名" label-width="100px">
+        <el-form-item label="姓名" label-width="100px" prop="teacherName">
           <el-input v-model.trim="action.teacherName" minlength="2" maxlength="5" />
         </el-form-item>
-        <el-form-item label="性别" label-width="100px">
+        <el-form-item label="性别" label-width="100px" prop="male">
           <el-radio-group v-model="action.male">
             <el-radio :label="true">男</el-radio>
             <el-radio :label="false">女</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="密码" label-width="100px">
+        <el-form-item label="密码" label-width="100px" prop="loginPassword">
           <el-input v-model="action.loginPassword" minlength="6" />
         </el-form-item>
-        <el-form-item label="管理员权限" label-width="100px">
+        <el-form-item label="管理员权限" label-width="100px" prop="manager">
           <el-checkbox v-model="action.manager" />
         </el-form-item>
-        <el-form-item label="手机号" label-width="100px">
-          <el-input v-model.number="action.phone" minlength="11" maxlength="11" />
+        <el-form-item label="手机号" label-width="100px" prop="phone">
+          <el-input v-model="action.phone" minlength="11" maxlength="11" />
         </el-form-item>
-        <el-form-item label="职称" label-width="100px">
+        <el-form-item label="职称" label-width="100px" prop="title">
           <el-input v-model.trim="action.title" />
         </el-form-item>
-        <el-form-item label="个人简介" label-width="100px">
+        <el-form-item label="个人简介" label-width="100px" prop="intro">
           <el-input type="textarea" v-model.trim="action.intro" />
         </el-form-item>
       </el-form>
@@ -96,6 +96,7 @@
 <script>
 import Bus from '@/util/Bus'
 import Axios from '@/util/Axios'
+import Regexps from '@/util/Regexps'
 
 export default {
   props: { user: Object },
@@ -105,12 +106,51 @@ export default {
       action: {
         id: 0,
         teacherNo: 0,
+        loginPassword: '',
         teacherName: '',
         manager: false,
         male: true,
         phone: '',
         title: '',
         intro: ''
+      },
+      rules: {
+        teacherNo: [
+          { required: true, message: '请输入学工号', trigger: 'blur' },
+          {
+            pattern: Regexps.user.teacherNo,
+            message: '错误的格式',
+            trigger: 'blur'
+          }
+        ],
+        teacherName: [
+          { required: true, message: '请输入姓名', trigger: 'blur' },
+          {
+            pattern: Regexps.user.teacherName,
+            message: '错误的格式',
+            trigger: 'blur'
+          }
+        ],
+        loginPassword: [
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          {
+            pattern: Regexps.user.loginPassword,
+            message: '错误的格式',
+            trigger: 'blur'
+          }
+        ],
+        manager: [{ type: 'boolean', message: '请选择', trigger: 'blur' }],
+        male: [{ type: 'boolean', message: '请选择性别', trigger: 'blur' }],
+        phone: [
+          { required: true, message: '请输入手机号码', trigger: 'blur' },
+          {
+            pattern: Regexps.user.phone,
+            message: '错误的格式',
+            trigger: 'blur'
+          }
+        ],
+        title: [{ required: true, message: '请输入职称', trigger: 'blur' }],
+        intro: [{ required: true, message: '请输入简介', trigger: 'blur' }]
       }
     }
   },
@@ -124,41 +164,47 @@ export default {
   },
   methods: {
     deleteUser(id) {
-      Axios({
-        method: 'delete',
-        url: '/user/' + id
-      })
-        .then(response => {
-          this.$notify({
-            title: '删除成功',
-            type: 'success',
-            duration: 5000,
-            position: 'top-right'
-          })
-          this.users = this.users.filter(u => u.id != id)
+      this.$confirm('此操作将永久删除该用户, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'error'
+      }).then(() => {
+        Axios({
+          method: 'delete',
+          url: '/user/' + id
         })
-        .catch(error => {
-          if (error.response && error.response.status === 404)
-            Axios({
-              method: 'get',
-              url: '/user/' + id
-            }).catch(e => {
-              if (e.response && e.response.status === 404)
-                this.$notify({
-                  title: '用户不存在',
-                  type: 'info',
-                  duration: 5000,
-                  position: 'top-right'
-                })
-            })
-          else
+          .then(response => {
             this.$notify({
-              title: '未知的错误',
-              type: 'warning',
+              title: '删除成功',
+              type: 'success',
               duration: 5000,
               position: 'top-right'
             })
-        })
+            this.users = this.users.filter(u => u.id != id)
+          })
+          .catch(error => {
+            if (error.response && error.response.status === 404)
+              Axios({
+                method: 'get',
+                url: '/user/' + id
+              }).catch(e => {
+                if (e.response && e.response.status === 404)
+                  this.$notify({
+                    title: '用户不存在',
+                    type: 'info',
+                    duration: 5000,
+                    position: 'top-right'
+                  })
+              })
+            else
+              this.$notify({
+                title: '未知的错误',
+                type: 'warning',
+                duration: 5000,
+                position: 'top-right'
+              })
+          })
+      })
     },
     combination(dispersedDate) {
       var date =
@@ -190,40 +236,43 @@ export default {
         title: '',
         intro: ''
       }
+      this.$refs['form'].resetFields()
     },
     submitAction() {
-      var old = this.users.filter(u => u.id === this.action.id)[0]
-      for (var p in this.action) {
-        if (this.action.hasOwnProperty(p) && this.action[p] !== old[p]) {
-          Axios({
-            url: '/user/' + this.action.id,
-            method: 'put',
-            params: this.action
-          })
-            .then(response =>
-              this.$notify({
-                title: '修改成功',
-                type: 'success',
-                duration: 5000,
-                position: 'top-right'
-              })
-            )
-            .catch(error => {
-              this.$notify({
-                title: '未知的错误',
-                type: 'warning',
-                duration: 5000,
-                position: 'top-right'
-              })
+      this.$ref['form'].validate(valid => {
+        var old = this.users.filter(u => u.id === this.action.id)[0]
+        for (var p in this.action) {
+          if (this.action.hasOwnProperty(p) && this.action[p] !== old[p]) {
+            Axios({
+              url: '/user/' + this.action.id,
+              method: 'put',
+              params: this.action
             })
-          return
+              .then(response =>
+                this.$notify({
+                  title: '修改成功',
+                  type: 'success',
+                  duration: 5000,
+                  position: 'top-right'
+                })
+              )
+              .catch(error => {
+                this.$notify({
+                  title: '未知的错误',
+                  type: 'warning',
+                  duration: 5000,
+                  position: 'top-right'
+                })
+              })
+            return
+          }
         }
-      }
-      this.$notify({
-        title: '您并未修改任何信息',
-        type: 'info',
-        duration: 5000,
-        position: 'top-right'
+        this.$notify({
+          title: '您并未修改任何信息',
+          type: 'info',
+          duration: 5000,
+          position: 'top-right'
+        })
       })
     },
     operate(u) {

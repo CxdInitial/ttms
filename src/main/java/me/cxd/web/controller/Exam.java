@@ -120,6 +120,7 @@ public class Exam {
         teachers.forEach(user -> {
             user.setLoginPassword(null);
             user.setSuperviseRecords(null);
+            user.setRecords(null);
             user.setTasks(null);
             user.setUpdateTime(null);
             user.setInsertTime(null);
