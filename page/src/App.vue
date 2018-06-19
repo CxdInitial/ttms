@@ -13,6 +13,7 @@
             <template slot="title">考试安排</template>
             <el-menu-item index="/exam/all">全部考试</el-menu-item>
             <el-menu-item index="/exam/own">与我相关</el-menu-item>
+            <el-menu-item index="/exam/arrange">考试安排</el-menu-item>
           </el-submenu>
           <el-submenu index="task">
             <template slot="title">任务中心</template>

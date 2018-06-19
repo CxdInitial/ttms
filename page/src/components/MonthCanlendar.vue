@@ -12,10 +12,16 @@
             <el-table :data="action.supervisors">
               <el-table-column type="expand">
                 <template slot-scope="inner">
-                  <el-form>
-                    <el-form-item label="职称">{{inner.row.title}}</el-form-item>
-                    <el-form-item label="管理员">{{inner.row.manager?'是':'否'}}</el-form-item>
-                    <el-form-item label="个人简介">{{inner.row.intro}}</el-form-item>
+                  <el-form label-position="left">
+                    <el-form-item label="职称">
+                      <span style="font-size:12px">{{inner.row.title}}</span>
+                    </el-form-item>
+                    <el-form-item label="管理员">
+                      <span style="font-size:12px">{{inner.row.manager?'是':'否'}}</span>
+                    </el-form-item>
+                    <el-form-item label="个人简介">
+                      <span style="font-size:12px">{{inner.row.intro}}</span>
+                    </el-form-item>
                   </el-form>
                 </template>
               </el-table-column>

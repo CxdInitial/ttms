@@ -4,7 +4,8 @@ import Users from '@/components/Users'
 import Index from '@/components/Index'
 import Register from '@/components/Register'
 import OwnExam from '@/components/OwnExam'
-import AllExam from '@/components/AllExam'
+import FullExam from '@/components/FullExam'
+import Arrange from '@/components/Arrange'
 
 Vue.use(Router)
 
@@ -32,8 +33,13 @@ export default new Router({
     },
     {
       path: '/exam/all',
-      name: 'AllExam',
-      component: AllExam
+      name: 'FullExam',
+      component: FullExam
+    },
+    {
+      path: '/exam/arrange',
+      name: 'ArrangeExam',
+      component: Arrange
     }
   ]
 })

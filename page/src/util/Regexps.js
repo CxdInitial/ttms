@@ -1,6 +1,6 @@
 export default {
   user: {
-    id: '^[0-9]{1,}$',
+    id: '^[1-9][0-9]{0,}$',
     teacherName: '^[\u2E80-\u9FFF]{2,5}$',
     teacherNo: '^[1-2][0-9]{9}$',
     loginPassword: '^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,}$',

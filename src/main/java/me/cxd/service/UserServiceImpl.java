@@ -120,10 +120,10 @@ public class UserServiceImpl implements UserService {
         }
         List<BigInteger> ids;
         if (asc)
-            ids = superviseDao.getEntityManager().createNativeQuery("select userId from (select t.id as userId,count(s.id) as sc from teacher as t left join superviserecord as s on t.id=s.supervisor_id group by t.id order by sc asc) temp").getResultList();
+            ids = superviseDao.getEntityManager().createNativeQuery("select teacher.id from teacher left join (select superviserecord.supervisor_id,count(examination.id) ce from examination right join superviserecord on examination.id=superviserecord.examination_id where examination.examDate>=CURDATE() group by superviserecord.supervisor_id)temp on temp.supervisor_id=teacher.id order by temp.ce asc").getResultList();
         else
-            ids = superviseDao.getEntityManager().createNativeQuery("select userId from (select t.id as userId,count(s.id) as sc from teacher as t left join superviserecord as s on t.id=s.supervisor_id group by t.id order by sc desc) temp").getResultList();
-        return ids.stream().map(BigInteger::longValue).map(userDao::read).collect(Collectors.toList());
+            ids = superviseDao.getEntityManager().createNativeQuery("select teacher.id from teacher left join (select superviserecord.supervisor_id,count(examination.id) ce from examination right join superviserecord on examination.id=superviserecord.examination_id where examination.examDate>=CURDATE() group by superviserecord.supervisor_id)temp on temp.supervisor_id=teacher.id order by temp.ce desc").getResultList();
+        return ids.stream().map(id->userDao.read(id.longValue())).collect(Collectors.toList());
     }
 
     @Override

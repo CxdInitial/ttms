@@ -97,7 +97,7 @@ export default {
     }
   },
   mounted: function() {
-    if (this.user) this.condition.teacherNo = this.user.id
+    if (this.user) this.condition.teacherNo = this.user.teacherNo
   },
   methods: {
     setExpand() {
@@ -106,8 +106,13 @@ export default {
     },
     setDate() {
       if (this.pickDate && this.pickDate.length) {
-        this.condition.begDate = this.pickDate[0].toISOString().split('T')[0]
-        this.condition.endDate = this.pickDate[1].toISOString().split('T')[0]
+        var oneday = 24 * 60 * 60 * 1000
+        this.condition.begDate = new Date(this.pickDate[0].valueOf() + oneday)
+          .toISOString()
+          .split('T')[0]
+        this.condition.endDate = new Date(this.pickDate[1].valueOf() + oneday)
+          .toISOString()
+          .split('T')[0]
       }
     },
     getCurrentNo() {

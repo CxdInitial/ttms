@@ -5,7 +5,7 @@
     </header>
     <el-form ref="form" :model="action" :rules="rules" :disabled="!authenticated">
       <el-form-item label="学工号" label-width="100px" prop="teacherNo">
-        <el-input v-model="action.teacherNo" minlength="10" maxlength="10" />
+        <el-input v-model="action.teacherNo" />
       </el-form-item>
       <el-form-item label="姓名" label-width="100px" prop="teacherName">
         <el-input v-model.trim="action.teacherName" minlength="2" maxlength="5" />
@@ -34,7 +34,7 @@
     </el-form>
     <footer>
       <el-button @click="resetForm" :disabled="!authenticated">重 置</el-button>
-      <el-button type="primary" @click="submitFrom" :disabled="!authenticated">提 交</el-button>
+      <el-button type="primary" @click="submitForm" :disabled="!authenticated">提 交</el-button>
     </footer>
   </div>
 </template>
@@ -118,7 +118,7 @@ export default {
       }
       this.$refs['form'].resetFields()
     },
-    submitFrom() {
+    submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
           Axios({

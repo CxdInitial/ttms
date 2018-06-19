@@ -39,11 +39,11 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public long count(Long teacherId, String area, String classroomNo, LocalDate beg, LocalDate end, Short begNo, Short endNo) throws NoSuchElementException {
+    public long count(Long teacherNo, String area, String classroomNo, LocalDate beg, LocalDate end, Short begNo, Short endNo) throws NoSuchElementException {
         EntityManager entityManager = examDao.getEntityManager();
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Long> query = builder.createQuery(Long.class);
-        if (teacherId == null) {
+        if (teacherNo == null) {
             Root<Examination> root = query.from(Examination.class);
             List<Predicate> predicates = new ArrayList<>(6);
             if (area != null)
@@ -63,7 +63,7 @@ public class ExamServiceImpl implements ExamService {
         }
         Root<SuperviseRecord> root = query.from(SuperviseRecord.class);
         List<Predicate> predicates = new ArrayList<>(7);
-        predicates.add(builder.equal(root.get("supervisor").get("id"), teacherId));
+        predicates.add(builder.equal(root.get("supervisor").get("teacherNo"), teacherNo));
         if (area != null)
             predicates.add(builder.equal(root.get("examination").get("area"), area));
         if (classroomNo != null)
@@ -82,11 +82,11 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public List<Examination> find(int begIndex, int count, Long teacherId, String area, String classroomNo, LocalDate beg, LocalDate end, Short begNo, Short endNo) throws NoSuchElementException {
+    public List<Examination> find(int begIndex, int count, Long teacherNo, String area, String classroomNo, LocalDate beg, LocalDate end, Short begNo, Short endNo) throws NoSuchElementException {
         EntityManager entityManager = examDao.getEntityManager();
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Examination> query = builder.createQuery(Examination.class);
-        if (teacherId == null) {
+        if (teacherNo == null) {
             Root<Examination> root = query.from(Examination.class);
             List<Predicate> predicates = new ArrayList<>(6);
             if (area != null)
@@ -102,11 +102,12 @@ public class ExamServiceImpl implements ExamService {
             if (endNo != null)
                 predicates.add(builder.le(root.get("endNo"), endNo == null ? 12 : endNo));
             query.select(root).where(predicates.toArray(new Predicate[0]));
+            query.orderBy(builder.asc(root.get("examDate")),builder.asc(root.get("begNo")));
             return entityManager.createQuery(query).setFirstResult(begIndex).setMaxResults(count).getResultList();
         }
         Root<SuperviseRecord> root = query.from(SuperviseRecord.class);
         List<Predicate> predicates = new ArrayList<>(7);
-        predicates.add(builder.equal(root.get("supervisor").get("id"), teacherId));
+        predicates.add(builder.equal(root.get("supervisor").get("teacherNo"), teacherNo));
         if (area != null)
             predicates.add(builder.equal(root.get("examination").get("area"), area));
         if (classroomNo != null)
@@ -120,6 +121,7 @@ public class ExamServiceImpl implements ExamService {
         if (endNo != null)
             predicates.add(builder.le(root.get("examination").get("endNo"), endNo == null ? 12 : endNo));
         query.select(root.get("examination")).distinct(true).where(predicates.toArray(new Predicate[0]));
+        query.orderBy(builder.asc(root.get("examination").get("examDate")),builder.asc(root.get("examination").get("begNo")));
         return entityManager.createQuery(query).setFirstResult(begIndex).setMaxResults(count).getResultList();
     }
 

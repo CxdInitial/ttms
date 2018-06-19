@@ -103,11 +103,10 @@ public class User {
         response.setStatus(HttpStatus.CREATED.value()); //更新成功
     }
 
-    @RequiredLevel(RequiredLevel.Level.ADMIN)
+    @NotSelfAndAdmin
     @PutMapping("/user/{id}")
     void update(@PathVariable long id, @Validated Teacher teacher, HttpSession session, HttpServletResponse response) {
         userService.update(id, teacher);
-        session.removeAttribute("user");
         response.setStatus(HttpStatus.CREATED.value());
     }
 

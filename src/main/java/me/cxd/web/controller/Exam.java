@@ -6,7 +6,6 @@ import me.cxd.service.ExamService;
 import me.cxd.web.authentic.RequiredLevel;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,17 +62,17 @@ public class Exam {
     @GetMapping("/count/examination")
     Map<String, ?> count(
             @RequestParam(required = false) @Min(value = 1000000000L) Long teacherNo
-            , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate beg
-            , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
+            , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate begDate
+            , @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
             , @RequestParam(required = false) @Pattern(regexp = "^((丹青)|(成栋)|(锦绣))楼$") String area
             , @RequestParam(required = false) @Pattern(regexp = "^([1-9]|(1[0-4]))((0[1-9])|(1[0-9])|(2[0-9])|3[0-6])$") String classroomNo
             , @RequestParam(required = false) @Min(1) @Max(12) Short begNo
             , @RequestParam(required = false) @Min(1) @Max(12) Short endNo
             , HttpServletResponse response) {
         response.setStatus(HttpStatus.OK.value());
-        if ((end == null ? LocalDate.MAX : end).compareTo(beg == null ? LocalDate.MIN : beg) < 0 || (endNo == null ? Short.MAX_VALUE : endNo) < (begNo == null ? Short.MIN_VALUE : begNo))
+        if ((endDate == null ? LocalDate.MAX : endDate).compareTo(begDate == null ? LocalDate.MIN : begDate) < 0 || (endNo == null ? Short.MAX_VALUE : endNo) < (begNo == null ? Short.MIN_VALUE : begNo))
             throw new ConstraintViolationException(null);
-        return Collections.singletonMap("count", examService.count(teacherNo, area, classroomNo, beg, end, begNo, endNo));
+        return Collections.singletonMap("count", examService.count(teacherNo, area, classroomNo, begDate, endDate, begNo, endNo));
     }
 
     @PostMapping("/examination")

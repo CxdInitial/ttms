@@ -58,7 +58,7 @@
     <el-dialog title="修改个人信息" :visible.sync="operating" width="50%" style="margin-right:100px" :before-close="removeAction">
       <el-form ref="form" :model="action" :rules="rules">
         <el-form-item label="学工号" label-width="100px" prop="teacherNo">
-          <el-input v-model="action.teacherNo" minlength="10" maxlength="10" />
+          <el-input v-model.number="action.teacherNo" />
         </el-form-item>
         <el-form-item label="姓名" label-width="100px" prop="teacherName">
           <el-input v-model.trim="action.teacherName" minlength="2" maxlength="5" />
@@ -118,7 +118,9 @@ export default {
         teacherNo: [
           { required: true, message: '请输入学工号', trigger: 'blur' },
           {
-            pattern: Regexps.user.teacherNo,
+            type: 'number',
+            min: 1000000000,
+            max: 9999999999,
             message: '错误的格式',
             trigger: 'blur'
           }
@@ -239,40 +241,50 @@ export default {
       this.$refs['form'].resetFields()
     },
     submitAction() {
-      this.$ref['form'].validate(valid => {
-        var old = this.users.filter(u => u.id === this.action.id)[0]
-        for (var p in this.action) {
-          if (this.action.hasOwnProperty(p) && this.action[p] !== old[p]) {
-            Axios({
-              url: '/user/' + this.action.id,
-              method: 'put',
-              params: this.action
-            })
-              .then(response =>
-                this.$notify({
-                  title: '修改成功',
-                  type: 'success',
-                  duration: 5000,
-                  position: 'top-right'
-                })
-              )
-              .catch(error => {
-                this.$notify({
-                  title: '未知的错误',
-                  type: 'warning',
-                  duration: 5000,
-                  position: 'top-right'
-                })
+      this.$refs['form'].validate(valid => {
+        if (valid) {
+          var old = this.users.filter(u => u.id === this.action.id)[0]
+          for (var p in this.action) {
+            if (this.action.hasOwnProperty(p) && this.action[p] !== old[p]) {
+              Axios({
+                url: '/user/' + this.action.id,
+                method: 'put',
+                params: this.action
               })
-            return
+                .then(response =>
+                  this.$notify({
+                    title: '修改成功',
+                    type: 'success',
+                    duration: 5000,
+                    position: 'top-right'
+                  })
+                )
+                .catch(error => {
+                  this.$notify({
+                    title: '未知的错误',
+                    type: 'warning',
+                    duration: 5000,
+                    position: 'top-right'
+                  })
+                })
+              Axios({
+                method: 'get',
+                url: '/user'
+              }).then(response => {
+                this.users = response.data.users.filter(
+                  u => u.id && u.id != this.user.id
+                )
+              })
+              return
+            }
           }
+          this.$notify({
+            title: '您并未修改任何信息',
+            type: 'info',
+            duration: 5000,
+            position: 'top-right'
+          })
         }
-        this.$notify({
-          title: '您并未修改任何信息',
-          type: 'info',
-          duration: 5000,
-          position: 'top-right'
-        })
       })
     },
     operate(u) {
@@ -294,7 +306,10 @@ export default {
     if (this.user != null)
       Axios({
         method: 'get',
-        url: '/user'
+        url: '/user',
+        params: {
+          count: 1000
+        }
       }).then(response => {
         this.users = response.data.users.filter(
           u => u.id && u.id != this.user.id

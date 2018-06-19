@@ -157,7 +157,7 @@ export default {
     }
   },
   created: function() {
-    if (this.user) this.condition.teacherNo = this.user.id
+    if (this.user) this.condition.teacherNo = this.user.teacherNo
     this.exams = new Array(14)
     for (var i = 0; i < 14; i++) {
       this.exams[i] = new Array(7)

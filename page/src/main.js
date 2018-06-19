@@ -49,4 +49,4 @@ router.beforeEach((to, from, next) => {
   next()
 })
 
-var managerPaths = ['/user/others', '/user/register']
+var managerPaths = ['/user/others', '/user/register', '/exam/arrange']

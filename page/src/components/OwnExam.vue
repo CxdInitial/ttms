@@ -10,16 +10,16 @@
 </template>
 
 <script>
-import Week from './Week'
-import Exams from './Exams'
+import WeekCalendar from './WeekCalendar.vue'
+import OwnExamTable from './OwnExamTable.vue'
 
 export default {
   props: {
     user: Object
   },
   components: {
-    calendar: Week,
-    exam: Exams
+    calendar: WeekCalendar,
+    exam: OwnExamTable
   }
 }
 </script>
